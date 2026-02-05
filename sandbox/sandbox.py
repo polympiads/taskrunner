@@ -1,11 +1,27 @@
 
-from sandbox.error import IsolateError
+import os
+
+import asyncio
+import aiofiles
+import aiofiles.os
+
+from typing import List
+
+from sandbox.error import IsolateError, SandboxDoubleFree, SandboxUseAfterFree
 from sandbox.isolate import Isolate
 from sandbox.manager import SandboxManager
+from sandbox.result import SandboxResult, SandboxStatistics
 from sandbox.subprocess import run_subprocess_command
 
 from .telemetry import start_as_current_span, trace, sandbox_logger
 from .manager   import SandboxManager
+
+from config import \
+    DEFAULT_TIME_LIMIT, \
+    DEFAULT_EXTRA_TIME, \
+    DEFAULT_WALL_TIME, \
+    DEFAULT_MEMORY_KB, \
+    SANDBOX_RESULT_FOLDER
 
 class Sandbox:
     def __init__ (self, box_id: int, box_dir: str):
@@ -49,8 +65,102 @@ class Sandbox:
                 raise err
             
     async def free_sandbox (self):
+        if self.box_id == -1:
+            raise SandboxDoubleFree()
+        
         with start_as_current_span("sandbox.free") as span:
             await run_subprocess_command( *Isolate.cleanup_command(self.box_id) )
             
             manager : SandboxManager = SandboxManager.instance()
             await manager.free_id(self.box_id)
+            self.box_id = -1
+
+    def path_relative_to_cwd (self, path: str):
+        if path.startswith("/"):
+            return os.path.join( self.box_dir, "box", path[1:] )
+        return os.path.join( self.box_dir, "box", path )
+    def path_relative_to_chroot (self, path: str):
+        if path.startswith("/"):
+            return os.path.join( self.box_dir, path[1:] )
+        return os.path.join( self.box_dir, path )
+
+    async def prepare_for_stdin (self, out_of_box: str, inside_box: str):
+        os.chmod(out_of_box, 0o644)
+        await aiofiles.os.link(out_of_box, self.path_relative_to_cwd(inside_box))
+
+    async def get_stat_file (self):
+        await aiofiles.os.makedirs( SANDBOX_RESULT_FOLDER, exist_ok = True )
+        return os.path.join( SANDBOX_RESULT_FOLDER, f"{self.box_id}.stat" )
+    async def run_sandbox (
+            self,
+            command : List[str],
+
+            time       : "float | None" = DEFAULT_TIME_LIMIT,
+            wall_time  : "float | None" = DEFAULT_WALL_TIME,
+            extra_time : "float | None" = DEFAULT_EXTRA_TIME,
+
+            memory : "int | None" = DEFAULT_MEMORY_KB, 
+
+            stdin:  "str | None" = None,
+            stdout: "str | None" = "out.txt",
+            stderr: "str | None" = "err.txt"
+        ):
+        if self.box_id == -1:
+            raise SandboxUseAfterFree()
+
+        with start_as_current_span("sandbox.run") as span:
+            try:
+                stat_file = await self.get_stat_file()
+
+                isolate_command = Isolate.run_command(
+                    self.box_id,
+                    command,
+                    stat_file,
+                    time, wall_time, extra_time,
+                    memory,
+                    stdin, stdout, stderr
+                )
+                
+                proc, sb_stdout, sb_stderr = await run_subprocess_command(*isolate_command)
+                
+                result = SandboxResult()
+                result.process = proc
+
+                result.process_stdout_path = self.path_relative_to_cwd(stdout)
+                result.process_stderr_path = self.path_relative_to_cwd(stderr)
+
+                result.sandbox = self
+                result.sandbox_stdout = sb_stdout
+                result.sandbox_stderr = sb_stderr
+
+                stat_reader = await aiofiles.open(stat_file, "r")
+                stat_text = await stat_reader.read()
+                result.statistics = SandboxStatistics.read_from(
+                    stat_text.splitlines()
+                )
+
+                sandbox_logger.info(
+                    "Command %s finished (time=%s, mem=%s)",
+                    command,
+                    result.statistics.time,
+                    result.statistics.max_memory,
+                    extra = {
+                        "isolate_command": isolate_command,
+
+                        "time": result.statistics.time,
+                        "wall_time": result.statistics.wall_time,
+                        "memory": result.statistics.max_memory,
+
+                        "stats" : stat_text
+                    }
+                )
+
+                return result
+            except Exception as err:
+                sandbox_logger.critical(
+                    "Could not run isolate command %s: %s",
+                    isolate_command,
+                    str(err)
+                )
+
+                raise err

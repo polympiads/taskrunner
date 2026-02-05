@@ -4,9 +4,6 @@ from opentelemetry import trace
 
 import asyncio
 
-def isolate_base_cmd (box_id: int):
-    return [ "isolate", f"--box-id={box_id}" ]
-
 async def run_subprocess_command (*cmd: List[str]):
     try:
         proc = await asyncio.create_subprocess_exec(

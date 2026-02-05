@@ -1,8 +1,11 @@
 
+import os
 import unittest
 
 from unittest.mock import AsyncMock, MagicMock, patch
+from config import SANDBOX_RESULT_FOLDER
 from sandbox import Sandbox, IsolateError
+from sandbox.error import SandboxDoubleFree, SandboxUseAfterFree
 from sandbox.subprocess import run_subprocess_command
 from opentelemetry import trace
 
@@ -107,3 +110,185 @@ class TestSandbox(unittest.IsolatedAsyncioTestCase):
         self.log_warn.assert_not_called()
         self.log_danger.assert_not_called()
         self.log_critical.assert_not_called()
+    async def test_free_sandbox_twice(self):
+        sb = Sandbox(box_id=5, box_dir="/tmp/box")
+        
+        with patch('sandbox.sandbox.run_subprocess_command', new_callable=AsyncMock) as mock_run:
+            await sb.free_sandbox()
+
+            with self.assertRaises( SandboxDoubleFree ):
+                await sb.free_sandbox()
+    async def test_run_sandbox_freed (self):
+        sb = Sandbox(box_id=5, box_dir="/tmp/box")
+        
+        with patch('sandbox.sandbox.run_subprocess_command', new_callable=AsyncMock) as mock_run:
+            await sb.free_sandbox()
+
+            with self.assertRaises( SandboxUseAfterFree ):
+                await sb.run_sandbox([ "echo", "Hi !" ])
+
+    async def test_path_relative_to_chroot (self):
+        sb = Sandbox(box_id=5, box_dir="/tmp/box")
+
+        self.assertEqual(sb.path_relative_to_chroot("a/b"),  os.path.join("/tmp/box", "a/b"))
+        self.assertEqual(sb.path_relative_to_chroot("/a/b"), os.path.join("/tmp/box", "a/b"))
+        self.assertEqual(sb.path_relative_to_chroot("a"),    os.path.join("/tmp/box", "a"))
+        self.assertEqual(sb.path_relative_to_chroot("/a"),   os.path.join("/tmp/box", "a"))
+    async def test_path_relative_to_cwd (self):
+        sb = Sandbox(box_id=5, box_dir="/tmp/box")
+
+        self.assertEqual(sb.path_relative_to_cwd("a/b"),  os.path.join("/tmp/box", "box", "a/b"))
+        self.assertEqual(sb.path_relative_to_cwd("/a/b"), os.path.join("/tmp/box", "box", "a/b"))
+        self.assertEqual(sb.path_relative_to_cwd("a"),    os.path.join("/tmp/box", "box", "a"))
+        self.assertEqual(sb.path_relative_to_cwd("/a"),   os.path.join("/tmp/box", "box", "a"))
+    async def test_prepare_for_stdin (self):
+        with patch("os.chmod") as chmod:
+            with patch("aiofiles.os.link") as link:
+                sb = Sandbox(box_id=5, box_dir="/tmp/box")
+                await sb.prepare_for_stdin( "/app/in.txt", "in.txt" )
+
+                chmod.assert_called_once_with("/app/in.txt", 0o644)
+                link.assert_awaited_once_with("/app/in.txt", os.path.join("/tmp/box", "box", "in.txt"))
+    async def test_get_stat_file (self):
+        with patch("aiofiles.os.makedirs") as makedirs:
+            sb = Sandbox(box_id=5, box_dir="/tmp/box")
+
+            stat_file = await sb.get_stat_file()
+
+            self.assertEqual(stat_file, os.path.join(SANDBOX_RESULT_FOLDER, "5.stat"))
+            makedirs.assert_called_once_with(SANDBOX_RESULT_FOLDER, exist_ok=True)
+            
+    @patch('sandbox.sandbox.run_subprocess_command')
+    async def test_run_successfull_command (self, mock_run_cmd):
+        with patch("sandbox.sandbox.Sandbox.get_stat_file", new_callable=AsyncMock) as get_stat_file:
+            get_stat_file.return_value = "file/stat"
+
+            mock_proc = MagicMock(returncode=0)
+            mock_run_cmd.return_value = (mock_proc, b"OK (stdout)", b"OK (stderr)")
+
+            with patch("aiofiles.open", new_callable=AsyncMock) as open:
+                stat_open = open.return_value = MagicMock()
+                stat_read = stat_open.read = AsyncMock(return_value="exitcode:0\ntime-wall:0.267\ntime:0.254\nmax-rss:256781\n")
+
+                sb = Sandbox(5, "/tmp/box/5")
+                sb_result = await sb.run_sandbox(
+                    [ "./executable" ],
+                    0.1,
+                    0.2,
+                    0.3,
+                    4,
+                    "5.txt",
+                    "6.txt",
+                    "../7.txt"
+                )
+
+                get_stat_file.assert_awaited_once_with()
+                cmd = ('isolate',
+                    '--box-id=5',
+                    '--run', 
+                    '--meta=file/stat',
+                    '--time=0.1',
+                    '--wall-time=0.2',
+                    '--extra-time=0.3',
+                    '--mem=4',
+                    '--stdin=5.txt',
+                    '--stdout=6.txt',
+                    '--stderr=../7.txt',
+                    '--',
+                    './executable')
+                mock_run_cmd.assert_awaited_once_with(*cmd)
+                open.assert_awaited_once_with("file/stat", "r")
+                stat_read.assert_awaited_once_with()
+
+                self.assertEqual(sb_result.process, mock_proc)
+                self.assertEqual(sb_result.process_stdout_path, os.path.join("/tmp/box/5", "box", "6.txt"))
+                self.assertEqual(sb_result.process_stderr_path, os.path.join("/tmp/box/5", "box", "../7.txt"))
+                self.assertIs(sb_result.sandbox, sb)
+                self.assertEqual(sb_result.sandbox_stdout, b"OK (stdout)")
+                self.assertEqual(sb_result.sandbox_stderr, b"OK (stderr)")
+
+                stats = sb_result.statistics
+                self.assertEqual(stats.time, 0.254)
+                self.assertEqual(stats.wall_time, 0.267)
+                self.assertEqual(stats.max_memory, 256781)
+                self.assertEqual(stats.csw_voluntary, None)
+                self.assertEqual(stats.csw_forced, None)
+                self.assertEqual(stats.exit_code, 0)
+                self.assertEqual(stats.killed, False)
+                self.assertEqual(stats.cg_oom_killed, False)
+                self.assertEqual(stats.message, None)
+                self.assertEqual(stats.status, None)
+                self.assertEqual(stats.exit_signal, None)
+                self.assertEqual(stats.cg_mem, None)
+
+                self.log_debug.assert_not_called()
+                self.log_info.assert_called_once_with(
+                    "Command %s finished (time=%s, mem=%s)",
+                    [ './executable' ],
+                    0.254,
+                    256781,
+                    extra = {
+                        "isolate_command": list(cmd),
+
+                        "time": 0.254,
+                        "wall_time": 0.267,
+                        "memory": 256781,
+
+                        "stats" : "exitcode:0\ntime-wall:0.267\ntime:0.254\nmax-rss:256781\n"
+                    }
+                )
+                self.log_warn.assert_not_called()
+                self.log_danger.assert_not_called()
+                self.log_critical.assert_not_called()
+
+                self.start_as_current_span.assert_called_once_with("sandbox.run")
+    
+    @patch('sandbox.sandbox.run_subprocess_command')
+    async def test_run_failed_command (self, mock_run_cmd):
+        with patch("sandbox.sandbox.Sandbox.get_stat_file", new_callable=AsyncMock) as get_stat_file:
+            get_stat_file.return_value = "file/stat"
+
+            mock_run_cmd.side_effect = IOError("Unexpected error")
+
+            sb = Sandbox(5, "/tmp/box/5")
+            with self.assertRaises(IOError):
+                await sb.run_sandbox(
+                    [ "./executable" ],
+                    0.1,
+                    0.2,
+                    0.3,
+                    4,
+                    "5.txt",
+                    "6.txt",
+                    "../7.txt"
+                )
+
+            get_stat_file.assert_awaited_once_with()
+            cmd = ('isolate',
+                '--box-id=5',
+                '--run', 
+                '--meta=file/stat',
+                '--time=0.1',
+                '--wall-time=0.2',
+                '--extra-time=0.3',
+                '--mem=4',
+                '--stdin=5.txt',
+                '--stdout=6.txt',
+                '--stderr=../7.txt',
+                '--',
+                './executable')
+            mock_run_cmd.assert_awaited_once_with(*cmd)
+            get_stat_file.assert_awaited_once_with()
+
+            self.log_debug.assert_not_called()
+            self.log_info.assert_not_called()
+            self.log_warn.assert_not_called()
+            self.log_danger.assert_not_called()
+            self.log_critical.assert_called_once_with(
+                "Could not run isolate command %s: %s",
+                list(cmd),
+                "Unexpected error"
+            )
+            
+            self.start_as_current_span.assert_called_once_with("sandbox.run")
+    
