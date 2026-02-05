@@ -1,0 +1,7 @@
+polympiads_telemetry
+
+opentelemetry-api==1.30.0
+opentelemetry-sdk==1.30.0
+
+pytest
+pytest-asyncio
