@@ -16,13 +16,26 @@ WORKDIR /tools/isolate/isolate-github
 RUN make
 RUN make install
 
+# Install Java
+RUN apt-get update
+RUN apt-get install -y openjdk-21-jdk
+
+# Install tools
+RUN apt-get update
+RUN apt-get install -y nano
+
 # Setup task runner
 RUN apt-get update
 RUN apt-get install -y python3 python3-pip
 
 WORKDIR /app
-COPY . .
+COPY requirements.txt .
 
 RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+COPY . .
 
-CMD ["tail", "-f", "/dev/null"]
+ENV TEST_JUDGE=yes
+#ENV DEBUG_LOGS=yes
+#ENV SAMPLE_GRAFANA=yes
+
+CMD ["bash", "runner.sh"]

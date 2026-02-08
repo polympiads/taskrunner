@@ -1,5 +1,5 @@
 
-from typing import List
+from typing import List, Tuple
 
 
 class Isolate:
@@ -29,7 +29,10 @@ class Isolate:
 
                 stdin:  "str | None",
                 stdout: "str | None",
-                stderr: "str | None"
+                stderr: "str | None",
+                
+                num_process : "int | None",
+                env_vars : "List[Tuple[str, str]]"
             ):
         result = Isolate.base_command(box_id)
         result.append("--run")
@@ -45,6 +48,11 @@ class Isolate:
         if stdin  is not None: result.append(f"--stdin={stdin}")
         if stdout is not None: result.append(f"--stdout={stdout}")
         if stderr is not None: result.append(f"--stderr={stderr}")
+
+        if num_process is not None: result.append(f"--processes={num_process}")
+        
+        for key, value in env_vars:
+            result.append(f"--env={key}={value}")
 
         result.append("--")
         result.extend(command)

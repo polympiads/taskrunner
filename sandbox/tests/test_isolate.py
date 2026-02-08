@@ -29,14 +29,15 @@ class TestIsolate (unittest.TestCase):
                 [ "python3", "main.py" ],
                 "stat.txt",
                 1.0, 2.0, 4.0, 420,
-                "in.txt", "out.txt", "err.txt"
+                "in.txt", "out.txt", "err.txt",
+                4, [ ("PATH", "/usr/bin") ]
             ),
             [
                 "isolate", "--box-id=42", "--run",
                 "--meta=stat.txt",
                 "--time=1.0", "--wall-time=2.0", "--extra-time=4.0",
                 "--mem=420", "--stdin=in.txt", "--stdout=out.txt",
-                "--stderr=err.txt", "--",
+                "--stderr=err.txt", "--processes=4", "--env=PATH=/usr/bin", "--",
                 "python3", "main.py"
             ]
         )

@@ -1,0 +1,16 @@
+name: Docker Integration Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Test Image
+        run: docker build . -t taskrunner-test
+
+      - name: Run Docker Tests
+        run: docker run --rm taskrunner-test

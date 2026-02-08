@@ -7,3 +7,6 @@ pytest
 pytest-asyncio
 
 aiofiles
+
+celery[redis]
+opentelemetry-instrumentation-celery

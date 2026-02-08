@@ -1,6 +1,9 @@
 
 import asyncio
+import os
 from typing import TYPE_CHECKING, List
+
+import aiofiles
 
 from .telemetry import sandbox_logger
 
@@ -68,5 +71,13 @@ class SandboxResult:
     sandbox_stdout: bytes
     sandbox_stderr: bytes
 
-    process_stdout_path: str | None
-    process_stderr_path: str | None
+    process_stdout: bytes | None = None
+    process_stderr: bytes | None = None
+
+    async def prepare (self, process_stdout_path: "str | None", process_stderr_path: "str | None"):
+        if os.path.exists(process_stdout_path):
+            async with aiofiles.open(process_stdout_path, "rb") as file:
+                self.process_stdout = await file.read()
+        if os.path.exists(process_stderr_path):
+            async with aiofiles.open(process_stderr_path, "rb") as file:
+                self.process_stderr = await file.read()

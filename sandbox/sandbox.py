@@ -5,7 +5,7 @@ import asyncio
 import aiofiles
 import aiofiles.os
 
-from typing import List
+from typing import List, Tuple
 
 from sandbox.error import IsolateError, SandboxDoubleFree, SandboxUseAfterFree
 from sandbox.isolate import Isolate
@@ -64,16 +64,19 @@ class Sandbox:
                 await manager.free_id(box_id)      
                 raise err
             
-    async def free_sandbox (self):
+    async def free_sandbox (self, safe_delete = False):
         if self.box_id == -1:
+            if safe_delete:
+                return
             raise SandboxDoubleFree()
         
         with start_as_current_span("sandbox.free") as span:
-            await run_subprocess_command( *Isolate.cleanup_command(self.box_id) )
-            
-            manager : SandboxManager = SandboxManager.instance()
-            await manager.free_id(self.box_id)
-            self.box_id = -1
+            try:
+                await run_subprocess_command( *Isolate.cleanup_command(self.box_id) )
+            finally:
+                manager : SandboxManager = SandboxManager.instance()
+                await manager.free_id(self.box_id)
+                self.box_id = -1
 
     def path_relative_to_cwd (self, path: str):
         if path.startswith("/"):
@@ -103,7 +106,10 @@ class Sandbox:
 
             stdin:  "str | None" = None,
             stdout: "str | None" = "out.txt",
-            stderr: "str | None" = "err.txt"
+            stderr: "str | None" = "err.txt",
+
+            num_process : "int | None" = None,
+            env_vars : "List[Tuple[str, str]]" = []
         ):
         if self.box_id == -1:
             raise SandboxUseAfterFree()
@@ -118,7 +124,8 @@ class Sandbox:
                     stat_file,
                     time, wall_time, extra_time,
                     memory,
-                    stdin, stdout, stderr
+                    stdin, stdout, stderr,
+                    num_process, env_vars
                 )
                 
                 proc, sb_stdout, sb_stderr = await run_subprocess_command(*isolate_command)
@@ -126,8 +133,12 @@ class Sandbox:
                 result = SandboxResult()
                 result.process = proc
 
-                result.process_stdout_path = self.path_relative_to_cwd(stdout)
-                result.process_stderr_path = self.path_relative_to_cwd(stderr)
+                process_stdout_path = self.path_relative_to_cwd(stdout)
+                process_stderr_path = self.path_relative_to_cwd(stderr)
+                await result.prepare(
+                    process_stdout_path,
+                    process_stderr_path
+                )
 
                 result.sandbox = self
                 result.sandbox_stdout = sb_stdout
@@ -135,6 +146,7 @@ class Sandbox:
 
                 stat_reader = await aiofiles.open(stat_file, "r")
                 stat_text = await stat_reader.read()
+                await stat_reader.close()
                 result.statistics = SandboxStatistics.read_from(
                     stat_text.splitlines()
                 )

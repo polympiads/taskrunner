@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 from config import SANDBOX_RESULT_FOLDER
 from sandbox import Sandbox, IsolateError
+from sandbox.context import sandbox_open
 from sandbox.error import SandboxDoubleFree, SandboxUseAfterFree
 from sandbox.subprocess import run_subprocess_command
 from opentelemetry import trace
@@ -168,6 +169,7 @@ class TestSandbox(unittest.IsolatedAsyncioTestCase):
 
             with patch("aiofiles.open", new_callable=AsyncMock) as open:
                 stat_open = open.return_value = MagicMock()
+                stat_clse = stat_open.close = AsyncMock()
                 stat_read = stat_open.read = AsyncMock(return_value="exitcode:0\ntime-wall:0.267\ntime:0.254\nmax-rss:256781\n")
 
                 sb = Sandbox(5, "/tmp/box/5")
@@ -199,10 +201,13 @@ class TestSandbox(unittest.IsolatedAsyncioTestCase):
                 mock_run_cmd.assert_awaited_once_with(*cmd)
                 open.assert_awaited_once_with("file/stat", "r")
                 stat_read.assert_awaited_once_with()
+                stat_clse.assert_awaited_once_with()
 
                 self.assertEqual(sb_result.process, mock_proc)
-                self.assertEqual(sb_result.process_stdout_path, os.path.join("/tmp/box/5", "box", "6.txt"))
-                self.assertEqual(sb_result.process_stderr_path, os.path.join("/tmp/box/5", "box", "../7.txt"))
+
+                # The out/err files do not exit so it returns None
+                self.assertEqual(sb_result.process_stdout, None)
+                self.assertEqual(sb_result.process_stderr, None)
                 self.assertIs(sb_result.sandbox, sb)
                 self.assertEqual(sb_result.sandbox_stdout, b"OK (stdout)")
                 self.assertEqual(sb_result.sandbox_stderr, b"OK (stderr)")
@@ -292,3 +297,8 @@ class TestSandbox(unittest.IsolatedAsyncioTestCase):
             
             self.start_as_current_span.assert_called_once_with("sandbox.run")
     
+    async def test_double_free_safe (self):
+        async with sandbox_open( Sandbox(-1, "/b/0") ):
+            # If the sandbox_open isn't protected properly
+            # This should raise an exception on async exit
+            pass
