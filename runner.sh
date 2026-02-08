@@ -1,5 +1,5 @@
 
-python3 -m coverage run --omit="**/tests/*,config.py" -m unittest discover
+python3 -m coverage run --omit="**/tests/*,config.py" -m pytest
 python3 -m coverage html
 python3 -m coverage report --fail-under=100
 
