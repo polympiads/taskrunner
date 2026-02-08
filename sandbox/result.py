@@ -37,7 +37,7 @@ class SandboxStatistics:
             if len(line) == 0: continue
 
             try:
-                key, value = line.split(":")
+                key, value = line.split(":", maxsplit=1)
 
                 match key:
                     case "cg-mem": stats.cg_mem = int(value)

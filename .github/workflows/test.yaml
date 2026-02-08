@@ -13,4 +13,4 @@ jobs:
         run: docker build . -t taskrunner-test
 
       - name: Run Docker Tests
-        run: docker run --rm taskrunner-test
+        run: docker run --privileged --rm taskrunner-test

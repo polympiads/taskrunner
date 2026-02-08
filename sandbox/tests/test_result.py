@@ -217,8 +217,26 @@ class TestSandboxStatistics (unittest.TestCase):
         self.assertEqual(stats.exit_signal, None)
         self.assertEqual(stats.cg_mem, 42000)
 
+    """
+    These are bugs that already happened in production
+    """
 
+    def test_proxy_message (self):
+        stats = SandboxStatistics.read_from([ "message:Cannot run proxy, clone failed: Operation not permitted" ])
         
+        self.assertEqual(stats.time, None)
+        self.assertEqual(stats.wall_time, None)
+        self.assertEqual(stats.max_memory, None)
+        self.assertEqual(stats.csw_voluntary, None)
+        self.assertEqual(stats.csw_forced, None)
+        self.assertEqual(stats.exit_code, None)
+        self.assertEqual(stats.killed, False)
+        self.assertEqual(stats.cg_oom_killed, False)
+        self.assertEqual(stats.message, "Cannot run proxy, clone failed: Operation not permitted")
+        self.assertEqual(stats.status, None)
+        self.assertEqual(stats.exit_signal, None)
+        self.assertEqual(stats.cg_mem, None)
+
     def test_exit_code_invalid (self):
         with self.assertRaises(Exception):
             stats = SandboxStatistics.read_from([ "exitcode:string" ])

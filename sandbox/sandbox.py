@@ -151,6 +151,10 @@ class Sandbox:
                     stat_text.splitlines()
                 )
 
+                # TODO, detect if there was a failure at the isolate step
+                #  (e.g. unpriviliged or something like that), by checking
+                #  status in statistics and propagate info upwards
+
                 sandbox_logger.info(
                     "Command %s finished (time=%s, mem=%s)",
                     command,
