@@ -38,7 +38,8 @@ JAVA_COMPILER = "/usr/bin/javac"
 JAR_COMPILER = "/usr/bin/jar"
 JAVA_EXECUTABLE = "/usr/bin/java"
 
-STORAGE_CLIENT = BaseStorageClient()
+STORAGE_CLIENT  = BaseStorageClient()
+PROBLEM_STORAGE_LOCATION = "/problems"
 
 CELERY_BACKEND = "redis://localhost:6379/0"
 CELERY_BROKER  = "pyamqp://guest@localhost//"

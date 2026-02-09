@@ -26,6 +26,8 @@ class InMemoryStorageClient (BaseStorageClient):
             raise DownloadError(f"Could not find object at location {location}")
 
         content, extension = _content
+        # This is a test implementation so we don't care about collisions
+        #   for the true downloader, we need to check that it doesn't exist yet.
         file = os.path.join( self.download_dir, str( uuid.uuid4() ) + extension )
 
         async with aiofiles.open(file, "wb") as fw:
