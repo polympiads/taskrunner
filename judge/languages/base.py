@@ -1,7 +1,7 @@
 
 import os
 import shutil
-from typing import List, Tuple
+from typing import Callable, List, Tuple
 
 import aiofiles
 
@@ -54,7 +54,11 @@ class CompiledLanguage (Language):
         return retcode == 1
     def should_compile (self):
         return True
-    async def compile(self, file: str, storage: str) -> "Tuple[bool, SandboxResult]":
+    async def compile(
+            self,
+            file: str,
+            storage: str,
+            before_run: "Callable[[Sandbox]]" = None) -> "Tuple[bool, SandboxResult]":
         with start_as_current_span("compile_executable") as span:
             async with sandbox_open() as sandbox:
                 filename = os.path.basename(file)
@@ -66,13 +70,16 @@ class CompiledLanguage (Language):
                 await aiofiles.os.link(
                     file, sandbox.path_relative_to_cwd(filename)
                 )
-
+                
+                if before_run is not None:
+                    await before_run(sandbox)
                 results = await sandbox.run_sandbox(
                     self.get_compilation_command(fileexe, filename),
                     time = 60,
                     wall_time = 60,
                     extra_time = 1,
                     num_process = 5,
+                    memory = 1024 * 1024,
                     env_vars = [ ("PATH", "/usr/bin:/bin") ]
                 )
 
