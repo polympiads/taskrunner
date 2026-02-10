@@ -69,3 +69,15 @@ class TestVerdict (unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             SubmissionVerdict.fromTestVerdict( TCVerdict.SKIPPED )
+
+    def test_verdict_to_representation (self):
+        self.assertEqual( 'S', TCVerdict.single_char_representation( TCVerdict.SKIPPED ))
+        self.assertEqual( 'A', TCVerdict.single_char_representation( TCVerdict.ACCEPTED ))
+        self.assertEqual( 'T', TCVerdict.single_char_representation( TCVerdict.TIME_LIMIT ))
+        self.assertEqual( 'M', TCVerdict.single_char_representation( TCVerdict.MEM_LIMIT ))
+        self.assertEqual( 'R', TCVerdict.single_char_representation( TCVerdict.RUNTIME_ERROR ))
+        self.assertEqual( 'W', TCVerdict.single_char_representation( TCVerdict.WRONG_ANSWER ))       
+        self.assertEqual( 'J', TCVerdict.single_char_representation( TCVerdict.JUDGE_ERROR ))
+
+        with self.assertRaises(NotImplementedError):
+            TCVerdict.single_char_representation(None)

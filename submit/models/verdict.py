@@ -10,6 +10,18 @@ class TestCaseVerdict (enum.Enum):
     WRONG_ANSWER  = 4
     JUDGE_ERROR   = 5
 
+    def single_char_representation (self):
+        match self:
+            case TestCaseVerdict.SKIPPED: return 'S'
+            case TestCaseVerdict.ACCEPTED: return 'A'
+            case TestCaseVerdict.TIME_LIMIT: return 'T'
+            case TestCaseVerdict.MEM_LIMIT: return 'M'
+            case TestCaseVerdict.RUNTIME_ERROR: return 'R'
+            case TestCaseVerdict.WRONG_ANSWER: return 'W'
+            case TestCaseVerdict.JUDGE_ERROR: return 'J'
+        
+        raise NotImplementedError(f"Test case verdict {self} has no single character representation")
+            
     def __lt__ (self, other: "TestCaseVerdict"):
         return self.value < other.value
 

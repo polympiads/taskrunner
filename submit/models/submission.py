@@ -17,15 +17,20 @@ class Submission (models.Model):
     code_location = models.TextField()
     exec_location = models.TextField()
 
+    first_wrong_test = models.IntegerField( default = -1 )
+
     @staticmethod
     def set_submission_information (
         submission_pk : int,
         status  : "SubmissionStatus  | None" = None,
-        verdict : "SubmissionVerdict | None" = None):
+        verdict : "SubmissionVerdict | None" = None,
+        wrong_test : "int | None" = None):
         with transaction.atomic():
             updates = {}
             if status  is not None: updates['status']  = status
             if verdict is not None: updates['verdict'] = verdict
+            if wrong_test is not None:
+                updates['first_wrong_test'] = wrong_test
 
             rows_updated = Submission.objects \
                 .filter(pk = submission_pk) \
