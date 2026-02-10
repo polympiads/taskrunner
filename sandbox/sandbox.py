@@ -16,12 +16,7 @@ from sandbox.subprocess import run_subprocess_command
 from .telemetry import start_as_current_span, trace, sandbox_logger
 from .manager   import SandboxManager
 
-from config import \
-    DEFAULT_TIME_LIMIT, \
-    DEFAULT_EXTRA_TIME, \
-    DEFAULT_WALL_TIME, \
-    DEFAULT_MEMORY_KB, \
-    SANDBOX_RESULT_FOLDER
+from django.conf import settings
 
 class Sandbox:
     def __init__ (self, box_id: int, box_dir: str):
@@ -92,17 +87,17 @@ class Sandbox:
         await aiofiles.os.link(out_of_box, self.path_relative_to_cwd(inside_box))
 
     async def get_stat_file (self):
-        await aiofiles.os.makedirs( SANDBOX_RESULT_FOLDER, exist_ok = True )
-        return os.path.join( SANDBOX_RESULT_FOLDER, f"{self.box_id}.stat" )
+        await aiofiles.os.makedirs( settings.SANDBOX_RESULT_FOLDER, exist_ok = True )
+        return os.path.join( settings.SANDBOX_RESULT_FOLDER, f"{self.box_id}.stat" )
     async def run_sandbox (
             self,
             command : List[str],
 
-            time       : "float | None" = DEFAULT_TIME_LIMIT,
-            wall_time  : "float | None" = DEFAULT_WALL_TIME,
-            extra_time : "float | None" = DEFAULT_EXTRA_TIME,
+            time       : "float | None" = settings.DEFAULT_TIME_LIMIT,
+            wall_time  : "float | None" = settings.DEFAULT_WALL_TIME,
+            extra_time : "float | None" = settings.DEFAULT_EXTRA_TIME,
 
-            memory : "int | None" = DEFAULT_MEMORY_KB, 
+            memory : "int | None" = settings.DEFAULT_MEMORY_KB, 
 
             stdin:  "str | None" = None,
             stdout: "str | None" = "out.txt",

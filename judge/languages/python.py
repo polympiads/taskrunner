@@ -2,7 +2,7 @@
 import os
 import aiofiles.os
 
-from config import PYTHON_EXECUTABLE
+from django.conf import settings
 from judge.languages.base import Language
 from sandbox.sandbox import Sandbox
 
@@ -13,4 +13,4 @@ class PythonLanguage (Language):
         return False
     
     def get_execution_command (self, filename: str):
-        return [PYTHON_EXECUTABLE, filename]
+        return [settings.PYTHON_EXECUTABLE, filename]

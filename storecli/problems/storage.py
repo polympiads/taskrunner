@@ -4,7 +4,7 @@ from typing import Dict
 import uuid
 import zipfile
 
-import config
+from django.conf import settings
 from storecli.problems.problem import Problem
 
 class ProblemStorage:
@@ -16,12 +16,12 @@ class ProblemStorage:
 
     @staticmethod
     def allocate_problem_directory ():
-        os.makedirs( config.PROBLEM_STORAGE_LOCATION, exist_ok=True )
+        os.makedirs( settings.PROBLEM_STORAGE_LOCATION, exist_ok=True )
         
         # do at most 100 tests
         # to avoid a deadlock of the worker
         for _idx in range(100):
-            dir_path = os.path.join( config.PROBLEM_STORAGE_LOCATION, str( uuid.uuid4() ) )
+            dir_path = os.path.join( settings.PROBLEM_STORAGE_LOCATION, str( uuid.uuid4() ) )
             if os.path.exists(dir_path):
                 continue
 
@@ -37,7 +37,7 @@ class ProblemStorage:
         if archive_location in ProblemStorage.cache:
             return ProblemStorage.cache[archive_location]
         
-        archive_path = await config.STORAGE_CLIENT.download( archive_location )
+        archive_path = await settings.STORAGE_CLIENT.download( archive_location )
         problem_dir  = ProblemStorage.allocate_problem_directory()
 
         archive_ext = os.path.splitext(archive_path)[1]

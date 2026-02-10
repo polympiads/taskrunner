@@ -6,7 +6,8 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-import config
+from django.conf import settings
+from django.test import override_settings
 from storecli.inmemory import InMemoryStorageClient
 from storecli.problems.storage import ProblemStorage
 
@@ -31,16 +32,16 @@ class TestProblemDownload (unittest.IsolatedAsyncioTestCase):
         prepare_sample1()
         self.inmemory_storage = InMemoryStorageClient( "/tmp" )
 
-        self.patch_storage = patch("config.STORAGE_CLIENT", self.inmemory_storage)
-        self.patch_storage.start()
+        self.patch_storage = override_settings(STORAGE_CLIENT=self.inmemory_storage)
+        self.patch_storage.__enter__()
         
         ProblemStorage.cache = {}
         asyncio.run( self.inmemory_storage.upload(SAMPLE1_PATH, "sample1") )
         asyncio.run( self.inmemory_storage.upload(SAMPLE1_PATH, "sample1-bis") )
         asyncio.run( self.inmemory_storage.upload(__file__, "not-a-zip") )
     def tearDown(self):
-        self.patch_storage.stop()
-    
+        self.patch_storage.__exit__(None, None, None)
+
     async def test_download (self):
         problem = await ProblemStorage.download("sample1")
 
@@ -58,7 +59,7 @@ class TestProblemDownload (unittest.IsolatedAsyncioTestCase):
         uuid4.return_value = "directory"
         
         problem1 = await ProblemStorage.download("sample1")
-        self.assertEqual(problem1.problem_dir, os.path.join(config.PROBLEM_STORAGE_LOCATION, "directory"))
+        self.assertEqual(problem1.problem_dir, os.path.join(settings.PROBLEM_STORAGE_LOCATION, "directory"))
         with self.assertRaises(AssertionError):
             await ProblemStorage.download("sample1-bis")
         patch_uuid.stop()

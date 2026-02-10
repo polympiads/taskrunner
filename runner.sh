@@ -1,5 +1,8 @@
 
-python3 -m coverage run --omit="**/tests/*,config.py" -m pytest
+python3 manage.py makemigrations
+python3 manage.py migrate
+
+python3 -m coverage run --omit="**/tests/*,manage.py" manage.py test
 python3 -m coverage html
 python3 -m coverage report --fail-under=100
 

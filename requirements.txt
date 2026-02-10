@@ -10,3 +10,7 @@ aiofiles
 
 celery[redis]
 opentelemetry-instrumentation-celery
+
+django
+opentelemetry-instrumentation-django
+django-enumfield

@@ -8,7 +8,7 @@ from typing import List
 import aiofiles
 import aiofiles.os
 
-from config import CXX_COMPILER
+from django.conf import settings
 from judge.languages.base import CompiledLanguage
 from judge.languages.error import CompilationError
 from sandbox.context import sandbox_open
@@ -32,7 +32,7 @@ class CppLanguage (CompiledLanguage):
         return [filename]
 
 GNU_GPP_23 = CppLanguage(
-    "23", CXX_COMPILER, [
+    "23", settings.CXX_COMPILER, [
         "-Wall", "-Wextra", "-Wconversion", "-static", 
         "-DONLINE_JUDGE", "-O2", "-std=c++23"
     ]

@@ -2,7 +2,8 @@
 import asyncio
 import unittest
 
-from sandbox.manager import SandboxManager, MAX_NB_SANDBOX
+from sandbox.manager import SandboxManager
+from django.conf import settings
 
 class TestSandboxManager (unittest.IsolatedAsyncioTestCase):
     def setUp(self):
@@ -13,7 +14,7 @@ class TestSandboxManager (unittest.IsolatedAsyncioTestCase):
     async def test_allocate_id (self):
         manager = SandboxManager.instance()
 
-        for idx in range (MAX_NB_SANDBOX):
+        for idx in range (settings.MAX_NB_SANDBOX):
             self.assertEqual( await manager.allocate_id(), idx )
 
         with self.assertRaises(asyncio.TimeoutError):
@@ -24,7 +25,7 @@ class TestSandboxManager (unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual( await manager.allocate_id(), 0 )
 
-        for idx in range (1, MAX_NB_SANDBOX):
+        for idx in range (1, settings.MAX_NB_SANDBOX):
             self.assertEqual( await manager.allocate_id(), idx )
 
         with self.assertRaises(asyncio.TimeoutError):
@@ -40,7 +41,7 @@ class TestSandboxManager (unittest.IsolatedAsyncioTestCase):
     async def test_free_id_during_allocate (self):
         manager = SandboxManager.instance()
 
-        for idx in range (MAX_NB_SANDBOX):
+        for idx in range (settings.MAX_NB_SANDBOX):
             self.assertEqual( await manager.allocate_id(), idx )
         with self.assertRaises(asyncio.TimeoutError):
             async with asyncio.timeout(0.1):

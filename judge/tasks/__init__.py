@@ -1,2 +1,2 @@
 
-
+from .icpc.compile import *

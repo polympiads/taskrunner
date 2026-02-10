@@ -3,7 +3,7 @@ import os
 import unittest
 
 from unittest.mock import AsyncMock, MagicMock, patch
-from config import SANDBOX_RESULT_FOLDER
+from django.conf import settings
 from sandbox import Sandbox, IsolateError
 from sandbox.context import sandbox_open
 from sandbox.error import SandboxDoubleFree, SandboxUseAfterFree
@@ -156,8 +156,8 @@ class TestSandbox(unittest.IsolatedAsyncioTestCase):
 
             stat_file = await sb.get_stat_file()
 
-            self.assertEqual(stat_file, os.path.join(SANDBOX_RESULT_FOLDER, "5.stat"))
-            makedirs.assert_called_once_with(SANDBOX_RESULT_FOLDER, exist_ok=True)
+            self.assertEqual(stat_file, os.path.join(settings.SANDBOX_RESULT_FOLDER, "5.stat"))
+            makedirs.assert_called_once_with(settings.SANDBOX_RESULT_FOLDER, exist_ok=True)
             
     @patch('sandbox.sandbox.run_subprocess_command')
     async def test_run_successfull_command (self, mock_run_cmd):

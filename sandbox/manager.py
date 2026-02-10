@@ -2,7 +2,7 @@
 import asyncio
 
 from typing import Literal
-from config import MAX_NB_SANDBOX
+from django.conf import settings
 
 class SandboxManager:
     __instance : "SandboxManager | Literal[None]" = None
@@ -11,7 +11,7 @@ class SandboxManager:
     def __init__(self):
         self.ids_queue = asyncio.Queue()
 
-        for idx in range(MAX_NB_SANDBOX):
+        for idx in range(settings.MAX_NB_SANDBOX):
             self.ids_queue.put_nowait(idx)
 
     async def allocate_id (self) -> int:

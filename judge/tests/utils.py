@@ -3,7 +3,7 @@ import asyncio
 import os
 import unittest
 
-from config import MAX_NB_SANDBOX
+from django.conf import settings
 from sandbox.manager import SandboxManager
 
 def can_test_judge ():
@@ -25,4 +25,4 @@ async def inspect_queue(q: asyncio.Queue):
     return items
 async def assert_all_sandbox_freed ():
     manager = SandboxManager.instance()
-    assert set(await inspect_queue(manager.ids_queue)) == set(range(MAX_NB_SANDBOX))
+    assert set(await inspect_queue(manager.ids_queue)) == set(range(settings.MAX_NB_SANDBOX))
