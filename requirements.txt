@@ -9,6 +9,7 @@ pytest-asyncio
 aiofiles
 
 celery[redis]
+celery[pytest]
 opentelemetry-instrumentation-celery
 
 django

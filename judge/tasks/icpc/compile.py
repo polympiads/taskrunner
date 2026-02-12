@@ -20,7 +20,7 @@ from submit.models.verdict import SubmissionVerdict
 from taskrunner.celery import judge_app
 
 from judge.languages import LanguageKind, get_language, get_language_name
-from judge.languages.error import CompilationError
+from judge.error import JudgeError
 from judge.telemetry import start_as_current_span
 from storecli.error import DownloadError
 

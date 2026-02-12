@@ -5,7 +5,7 @@ from typing import Callable, List, Tuple
 
 import aiofiles
 
-from judge.languages.error import CompilationError
+from judge.error import JudgeError
 from sandbox.context import sandbox_open
 from sandbox.result import SandboxResult
 from sandbox.sandbox import Sandbox
@@ -96,7 +96,7 @@ class CompiledLanguage (Language):
                     span.set_attribute("isolate:stdout", results.sandbox_stdout)
                     span.set_attribute("isolate:stderr", results.sandbox_stderr)
                     span.set_attribute("isolate:exitcode", results.process.returncode)
-                    raise CompilationError( results )
+                    raise JudgeError( results )
                 
                 span.set_attribute("executable:storage", storage)
 

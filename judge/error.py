@@ -1,7 +1,7 @@
 
 from sandbox.result import SandboxResult
 
-class CompilationError (Exception):
+class JudgeError (Exception):
     results: SandboxResult
 
     def __init__(self, results: SandboxResult, *args):

@@ -1,10 +1,13 @@
 
 from typing import List, Tuple
 
+from django.conf import settings
 
 class Isolate:
     @staticmethod
     def base_command (box_id: int):
+        if settings.USE_CGROUPS:
+            return [ "isolate", f"--box-id={box_id}", "--cg" ]
         return [ "isolate", f"--box-id={box_id}" ]
 
     @staticmethod
@@ -43,7 +46,11 @@ class Isolate:
         if wall_time  is not None: result.append(f"--wall-time={wall_time}")
         if extra_time is not None: result.append(f"--extra-time={extra_time}")
 
-        if memory is not None: result.append(f"--mem={memory}")
+        if memory is not None:
+            if settings.USE_CGROUPS:
+                result.append(f"--cg-mem={memory}")
+            else:
+                result.append(f"--mem={memory}")
 
         if stdin  is not None: result.append(f"--stdin={stdin}")
         if stdout is not None: result.append(f"--stdout={stdout}")

@@ -6,13 +6,14 @@ from django.conf import settings
 
 class SandboxManager:
     __instance : "SandboxManager | Literal[None]" = None
-    ids_queue  : asyncio.Queue
+    ids_queue  : asyncio.Queue = None
 
     def __init__(self):
-        self.ids_queue = asyncio.Queue()
+        if self.ids_queue is None:
+            self.ids_queue = asyncio.Queue()
 
-        for idx in range(settings.MAX_NB_SANDBOX):
-            self.ids_queue.put_nowait(idx)
+            for idx in range(settings.MAX_NB_SANDBOX):
+                self.ids_queue.put_nowait(idx)
 
     async def allocate_id (self) -> int:
         return await self.ids_queue.get()

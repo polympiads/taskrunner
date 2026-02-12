@@ -83,8 +83,11 @@ class Sandbox:
         return os.path.join( self.box_dir, path )
 
     async def prepare_for_stdin (self, out_of_box: str, inside_box: str):
+        inside_box = self.path_relative_to_cwd(inside_box)
+        if os.path.exists(inside_box):
+            os.remove(inside_box)
         os.chmod(out_of_box, 0o644)
-        await aiofiles.os.link(out_of_box, self.path_relative_to_cwd(inside_box))
+        await aiofiles.os.link(out_of_box, inside_box)
 
     async def get_stat_file (self):
         await aiofiles.os.makedirs( settings.SANDBOX_RESULT_FOLDER, exist_ok = True )

@@ -10,7 +10,7 @@ import aiofiles.os
 
 from django.conf import settings
 from judge.languages.base import CompiledLanguage
-from judge.languages.error import CompilationError
+from judge.error import JudgeError
 from sandbox.context import sandbox_open
 
 class CppLanguage (CompiledLanguage):

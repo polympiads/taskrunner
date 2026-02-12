@@ -160,6 +160,8 @@ CELERY_BROKER  = "pyamqp://guest@localhost//"
 MAX_LEN_ERROR_MESSAGE = 1024
 MAX_TESTS_PER_BATCH = 8
 
+USE_CGROUPS = False
+
 judge_app = Celery(
     "judge",
     backend=CELERY_BACKEND,

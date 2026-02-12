@@ -33,7 +33,7 @@ class TestFinalizeTask (django.test.TransactionTestCase):
         with self.assertRaises(Submission.DoesNotExist):
             finalize_task(
                 [ TestCaseOutput(0, TestCaseVerdict.ACCEPTED) ],
-                SubmissionInformation( self.pk + 1, "", "" )
+                SubmissionInformation( self.pk + 1, "", "", None )
             )
     def test_finalize_accepted (self):
         finalize_task(
@@ -41,7 +41,7 @@ class TestFinalizeTask (django.test.TransactionTestCase):
                 TestCaseOutput(0, TestCaseVerdict.ACCEPTED),
                 TestCaseOutput(1, TestCaseVerdict.ACCEPTED)
             ],
-            SubmissionInformation( self.pk, "", "" )
+            SubmissionInformation( self.pk, "", "", None )
         )
 
         self.assertSubmission(
@@ -55,7 +55,7 @@ class TestFinalizeTask (django.test.TransactionTestCase):
                     TestCaseOutput(0, TestCaseVerdict.ACCEPTED),
                     TestCaseOutput(1, kind)
                 ],
-                SubmissionInformation( self.pk, "", "" )
+                SubmissionInformation( self.pk, "", "", None )
             )
 
             self.assertSubmission(
@@ -69,7 +69,7 @@ class TestFinalizeTask (django.test.TransactionTestCase):
                     TestCaseOutput(0, kind),
                     TestCaseOutput(1, kind)
                 ],
-                SubmissionInformation( self.pk, "", "" )
+                SubmissionInformation( self.pk, "", "", None )
             )
 
             self.assertSubmission(
@@ -80,7 +80,7 @@ class TestFinalizeTask (django.test.TransactionTestCase):
                 TestCaseOutput(0, TestCaseVerdict.MEM_LIMIT),
                 TestCaseOutput(1, TestCaseVerdict.RUNTIME_ERROR)
             ],
-            SubmissionInformation( self.pk, "", "" )
+            SubmissionInformation( self.pk, "", "", None )
         )
 
         self.assertSubmission(
@@ -93,7 +93,7 @@ class TestFinalizeTask (django.test.TransactionTestCase):
                 [ [ TestCaseOutput(0, TestCaseVerdict.RUNTIME_ERROR) ] ],
                 TestCaseOutput(1, TestCaseVerdict.MEM_LIMIT)
             ],
-            SubmissionInformation( self.pk, "", "" )
+            SubmissionInformation( self.pk, "", "", None )
         )
 
         self.assertSubmission(

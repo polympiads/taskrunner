@@ -11,7 +11,7 @@ import django.test
 from django.conf import settings
 from django.test import override_settings
 from judge.languages import LanguageKind
-from judge.languages.error import CompilationError
+from judge.error import JudgeError
 from judge.tasks.icpc.compile import CompilationResult, _compile_task, compile_task, CompilationInput
 from storecli.error import DownloadError
 from storecli.inmemory import InMemoryStorageClient
@@ -89,7 +89,7 @@ class TestICPCCompileTask (django.test.TransactionTestCase):
     @patch("judge.languages.cpp.CppLanguage.get_compilation_command", new = custom_get_compilation_command_fail)
     def test_compilation_failure (self):
         self.inmemory_storage.in_memory[ "in.cpp" ] = (b"int main () {}", ".cpp")
-        with self.assertRaises(CompilationError):
+        with self.assertRaises(JudgeError):
             asyncio.run( _compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ) ) )
         
         self.assertSubmission(
@@ -168,7 +168,7 @@ class TestICPCCompileTaskSync (django.test.TransactionTestCase):
     @patch("judge.languages.cpp.CppLanguage.get_compilation_command", new = custom_get_compilation_command_fail)
     def test_compilation_failure (self):
         self.inmemory_storage.in_memory[ "in.cpp" ] = (b"int main () {}", ".cpp")
-        with self.assertRaises(CompilationError):
+        with self.assertRaises(JudgeError):
             compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ) )
         self.assertSubmission(
             SubmissionStatus.FAILED, SubmissionVerdict.JUDGE_ERROR)
