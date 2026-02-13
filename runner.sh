@@ -7,4 +7,4 @@ python3 -m coverage html
 python3 -m coverage report --fail-under=100
 
 # To view the coverage manually
-python3 -m http.server
+# python3 -m http.server

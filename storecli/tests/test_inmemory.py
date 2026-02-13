@@ -1,5 +1,6 @@
 
 import unittest
+from unittest.mock import patch
 
 import aiofiles
 
@@ -33,3 +34,7 @@ class TestInMemoryStorageClient(unittest.IsolatedAsyncioTestCase):
         self.client.put("main.cpp", b"int main () {}", ".cpp")
         await self.client.delete("main.cpp")
         self.assertEqual(self.client.in_memory, {})
+    async def test_reserve (self):
+        with patch("storecli.inmemory.uuid") as uuid:
+            uuid.uuid4 = lambda : "hi"
+            self.assertEqual( await self.client.reserve(), "hi" )

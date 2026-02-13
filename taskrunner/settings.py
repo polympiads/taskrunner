@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'judge',
     'sandbox',
     'storecli',
-    'submit'
+    'submit',
+    'problems'
 ]
 
 MIDDLEWARE = [

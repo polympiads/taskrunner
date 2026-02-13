@@ -44,6 +44,8 @@ class InMemoryStorageClient (BaseStorageClient):
             )
     async def delete(self, location):
         del self.in_memory[location]
+    async def reserve(self):
+        return str(uuid.uuid4())
 
     def put (self, location: str, content: bytes, extension: str):
         self.in_memory[location] = (content, extension)

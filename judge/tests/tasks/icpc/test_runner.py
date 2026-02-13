@@ -13,7 +13,7 @@ from judge.tasks.icpc.subinfo import SubmissionInformation
 from judge.tasks.icpc.testoutput import TestCaseOutput, flatten_test_cases_output
 from judge.tasks.icpc.testrunner import run_tests_task
 from judge.tests.languages.test_cpp import APLUSB_PROG
-from judge.tests.tasks.polygon.test_prepare import compile_polygon_packages, setup_polygon_packages
+from problems.tests.tasks.polygon.test_prepare import compile_polygon_packages, setup_polygon_packages
 from sandbox.result import SandboxStatistics
 from sandbox.sandbox import Sandbox
 from storecli.inmemory import InMemoryStorageClient
