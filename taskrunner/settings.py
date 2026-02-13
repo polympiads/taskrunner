@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'sandbox',
     'storecli',
     'submit',
-    'problems'
+    'problems',
+    'storage'
 ]
 
 MIDDLEWARE = [
@@ -154,6 +155,7 @@ JAVA_EXECUTABLE = "/usr/bin/java"
 
 STORAGE_CLIENT  = BaseStorageClient()
 PROBLEM_STORAGE_LOCATION = "/problems"
+STORAGE_SERVER_LOCATION  = "/storage/server"
 
 CELERY_BACKEND = "redis://localhost:6379/0"
 CELERY_BROKER  = "pyamqp://guest@localhost//"
