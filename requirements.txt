@@ -16,3 +16,4 @@ django
 opentelemetry-instrumentation-django
 django-enumfield
 uuid6
+requests

@@ -6,6 +6,10 @@ import uuid6
 from storage.models import StorageEntry
 from storage.utils import extract_location, path_from_location
 
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
+@method_decorator(csrf_exempt, name='dispatch')
 class FileUploadView (View):
     def post (self, request: HttpRequest):
         location, location_response = extract_location(request)

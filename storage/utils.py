@@ -4,12 +4,14 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponseBadRequest, JsonResponse
 import uuid6
 
-def chunks_from_location (uuid: uuid6.UUID, sep = os.path.sep) -> str:
-    location = str(uuid).replace("-", "")
+def chunks_from_location (uuid: "uuid6.UUID | str", sep = os.path.sep) -> str:
+    location = str(uuid)
 
     return location[:4] + sep + location[4:6] + sep + location
-def path_from_location (uuid: uuid6.UUID) -> str:
-    result = os.path.join(settings.STORAGE_SERVER_LOCATION, chunks_from_location(uuid))
+def path_from_location (uuid: "uuid6.UUID | str", base: "str | None" = None) -> str:
+    if base is None:
+        base = settings.STORAGE_SERVER_LOCATION
+    result = os.path.join(base, chunks_from_location(uuid))
     os.makedirs( os.path.dirname(result), exist_ok=True )
 
     return result
