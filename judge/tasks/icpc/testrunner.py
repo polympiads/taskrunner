@@ -10,8 +10,8 @@ from django.conf import settings
 from judge.error import JudgeError
 from judge.languages import get_language
 from judge.languages.cpp import GNU_GPP_23
-from judge.tasks.icpc.subinfo import SubmissionInformation
-from judge.tasks.icpc.testoutput import TestCaseOutput, TestCasesOutput, flatten_test_cases_output, get_test_cases_verdict
+from judge.tasks.icpc.subinfo import SubmissionInformation, s_SubmissionInformation
+from judge.tasks.icpc.testoutput import TestCaseOutput, TestCasesOutput, deserialize_outputs, flatten_test_cases_output, get_test_cases_verdict, s_TestCasesOutput, serialize_outputs
 from sandbox.context import sandbox_open
 from sandbox.sandbox import Sandbox
 from storecli.problems.problem import Problem
@@ -107,11 +107,15 @@ async def run_test (
 
 @judge_app.task
 def run_tests_task (
-            tests_already_done: List[TestCasesOutput],
-            submission: SubmissionInformation,
+            tests_already_done: s_TestCasesOutput,
+            submission: s_SubmissionInformation,
             test_cases: List[int]
         ) -> List[TestCasesOutput]:
-    return asyncio.run( _run_tests_task_and_check_for_errors(tests_already_done, submission, test_cases) )
+    return serialize_outputs( asyncio.run( _run_tests_task_and_check_for_errors(
+        deserialize_outputs(tests_already_done),
+        SubmissionInformation.deserialize(submission),
+        test_cases
+    ) ) )
 async def _run_tests_task_and_check_for_errors (
             tests_already_done: List[TestCasesOutput],
             submission: SubmissionInformation,
@@ -130,7 +134,7 @@ async def _run_tests_task (
             tests_already_done: List[TestCasesOutput],
             submission: SubmissionInformation,
             test_cases: List[int]
-        ) -> List[TestCasesOutput]:
+        ) -> TestCasesOutput:
     with start_as_current_span("Submission.run_tests") as root_span:
         tests_already_done = flatten_test_cases_output(tests_already_done)
         root_span.set_attribute("submission:id", submission.submission_id)

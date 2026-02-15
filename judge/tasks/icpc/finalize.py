@@ -1,7 +1,7 @@
 
 from typing import List
-from judge.tasks.icpc.subinfo import SubmissionInformation
-from judge.tasks.icpc.testoutput import TestCasesOutput, as_string_buffer, flatten_test_cases_output
+from judge.tasks.icpc.subinfo import SubmissionInformation, s_SubmissionInformation
+from judge.tasks.icpc.testoutput import deserialize_outputs, s_TestCasesOutput, as_string_buffer, flatten_test_cases_output
 from judge.telemetry import start_as_current_span
 from submit.models.status import SubmissionStatus
 from submit.models.submission import Submission
@@ -10,9 +10,12 @@ from taskrunner.celery import judge_app
 
 @judge_app.task
 def finalize_task (
-        test_cases      : List[TestCasesOutput],
-        submission_info : SubmissionInformation
+        s_test_cases      : s_TestCasesOutput,
+        s_submission_info : s_SubmissionInformation
     ):
+    test_cases = deserialize_outputs(s_test_cases)
+    submission_info = SubmissionInformation.deserialize(s_submission_info)
+
     with start_as_current_span(f"Submission.finalize") as span:
         span.set_attribute("submission:id", submission_info.submission_id)
         span.set_attribute("storage:exec", submission_info.exec_location)

@@ -8,9 +8,9 @@ from django.test import override_settings
 
 from judge.error import JudgeError
 from judge.languages import LanguageKind
-from judge.tasks.icpc.compile import CompilationInput, compile_task
+from judge.tasks.icpc.compile import CompilationInput, CompilationResult, compile_task
 from judge.tasks.icpc.subinfo import SubmissionInformation
-from judge.tasks.icpc.testoutput import TestCaseOutput, flatten_test_cases_output
+from judge.tasks.icpc.testoutput import TestCaseOutput, deserialize_outputs, flatten_test_cases_output, serialize_outputs
 from judge.tasks.icpc.testrunner import run_tests_task
 from judge.tests.languages.test_cpp import APLUSB_PROG
 from problems.models.problem import Problem
@@ -143,13 +143,14 @@ class TestTestRunnerTask (django.test.TransactionTestCase):
 
         self.pk = submission.pk
         
-        result = compile_task(
-            CompilationInput(submission.pk, input_loc, exec_loc, LanguageKind.CPP_23, 1., 1.)
-        )
+        result = CompilationResult.deserialize( compile_task(
+            CompilationInput(submission.pk, input_loc, exec_loc, LanguageKind.CPP_23, 1., 1.).serialize()
+        ) )
         assert result.compilation_success, result.error_message
         
         subinfo = SubmissionInformation( submission.pk, f"proc-{package}", exec_loc, LanguageKind.CPP_23 )
-        return flatten_test_cases_output( run_tests_task( done, subinfo, tests ) )
+        return flatten_test_cases_output( deserialize_outputs( run_tests_task(
+            serialize_outputs( done ), subinfo.serialize(), tests ) ) )
 
     def verify_accepted (self, results: List[TestCaseOutput], tests: List[int]):
         for idx, result in enumerate(results):

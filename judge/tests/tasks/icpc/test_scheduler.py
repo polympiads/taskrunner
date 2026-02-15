@@ -110,8 +110,8 @@ class TestScheduler(django.test.TransactionTestCase):
 
             subinfo = SubmissionInformation( self.pk, "yes", "yes", LanguageKind.CPP_23 )
             scheduler_task(
-                CompilationResult(False, ""),
-                subinfo
+                CompilationResult(False, "").serialize(),
+                subinfo.serialize()
             )
 
             self.finalize.assert_not_called()
@@ -125,12 +125,13 @@ class TestScheduler(django.test.TransactionTestCase):
 
             subinfo = SubmissionInformation( self.pk, "yes", "yes", LanguageKind.CPP_23 )
             scheduler_task(
-                CompilationResult(),
-                subinfo
+                CompilationResult().serialize(),
+                subinfo.serialize()
             )
 
             self.finalize.assert_called_once()
             batch, new_subinfo = self.finalize.call_args.args
+            new_subinfo = SubmissionInformation.deserialize(new_subinfo)
             self.assertEqual(subinfo.submission_id, new_subinfo.submission_id)
             self.assertEqual(subinfo.exec_location, new_subinfo.exec_location)
             self.assertEqual(subinfo.problem_location, new_subinfo.problem_location)
@@ -163,8 +164,8 @@ class TestScheduler(django.test.TransactionTestCase):
             subinfo = SubmissionInformation( self.pk, "yes", "yes", LanguageKind.CPP_23 )
             with self.assertRaises(DownloadError):
                 scheduler_task(
-                    CompilationResult(),
-                    subinfo
+                    CompilationResult().serialize(),
+                    subinfo.serialize()
                 )
                 
             self.assertSubmission( SubmissionStatus.FAILED, SubmissionVerdict.JUDGE_ERROR )

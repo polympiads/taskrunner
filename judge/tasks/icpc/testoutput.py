@@ -1,6 +1,10 @@
 
-from typing import List
+from typing import List, TypedDict
 from submit.models.verdict import TestCaseVerdict
+
+class s_TestCaseOutput (TypedDict):
+    test_id: int
+    verdict: str
 
 class TestCaseOutput:
     test_id: int
@@ -15,8 +19,17 @@ class TestCaseOutput:
         self.test_id = test_id
         self.verdict = verdict
 
-type TestCasesOutput = "List[TestCasesOutput] | TestCaseOutput"
+type TestCasesOutput   = "List[TestCasesOutput] | TestCaseOutput"
+type s_TestCasesOutput = "List[s_TestCasesOutput] | s_TestCaseOutput"
 
+def serialize_outputs (test_cases: TestCasesOutput) -> s_TestCasesOutput:
+    if isinstance(test_cases, list):
+        return list(map(serialize_outputs, test_cases))
+    return { "test_id": test_cases.test_id, "verdict": test_cases.verdict.value }
+def deserialize_outputs (test_cases: s_TestCasesOutput) -> TestCasesOutput:
+    if isinstance(test_cases, list):
+        return list(map(deserialize_outputs, test_cases))
+    return TestCaseOutput(test_cases["test_id"], TestCaseVerdict(test_cases["verdict"]))
 
 def flatten_test_cases_output (test_cases : List[TestCasesOutput]) -> List[TestCaseOutput]:
     result: List[TestCaseOutput] = []

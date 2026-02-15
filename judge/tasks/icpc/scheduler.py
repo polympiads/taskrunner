@@ -19,23 +19,25 @@ import asyncio
 from celery import chord
 from django.conf import settings
 from judge.tasks.icpc.finalize import finalize_task
-from judge.tasks.icpc.subinfo import SubmissionInformation
+from judge.tasks.icpc.subinfo import SubmissionInformation, s_SubmissionInformation
 from judge.tasks.icpc.testrunner import run_tests_task
 from submit.models.status import SubmissionStatus
 from submit.models.submission import Submission
 from submit.models.verdict import SubmissionVerdict
 from taskrunner.celery import judge_app
-from judge.tasks.icpc.compile import CompilationResult
+from judge.tasks.icpc.compile import CompilationResult, s_CompilationResult
 from storecli.problems.storage import ProblemStorage
 from judge.telemetry import start_as_current_span, judge_logger
 from asgiref.sync import sync_to_async
 
 @judge_app.task
 def scheduler_task (
-        compilation_result : CompilationResult,
-        submission_info    : SubmissionInformation
+        compilation_result : s_CompilationResult,
+        submission_info    : s_SubmissionInformation
         ):
-    return asyncio.run( _scheduler_task(compilation_result, submission_info) )
+    return asyncio.run( _scheduler_task(
+        CompilationResult.deserialize(compilation_result),
+        SubmissionInformation.deserialize(submission_info)) )
 
 async def _scheduler_task (
         compilation_result : CompilationResult,
@@ -61,7 +63,7 @@ async def _scheduler_task (
             for start in range(0, test_count, settings.MAX_TESTS_PER_BATCH):
                 end = min(start + settings.MAX_TESTS_PER_BATCH, test_count)
 
-                batch = run_tests_task.s( [], submission_info, list(range(start, end)) )
+                batch = run_tests_task.s( [], submission_info.serialize(), list(range(start, end)) )
                 all_batches.append(batch)
 
                 batches_as_strings.append(f"range({start}, {end})")
@@ -72,7 +74,7 @@ async def _scheduler_task (
                 status  = SubmissionStatus.RUNNING
             )
 
-            return chord( all_batches )( finalize_task.s( submission_info ) )
+            return chord( all_batches )( finalize_task.s( submission_info.serialize() ) )
         except Exception as exc:
             judge_logger.critical(
                 "Scheduling failed for submission id %s",

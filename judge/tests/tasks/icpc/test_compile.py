@@ -140,12 +140,13 @@ class TestICPCCompileTaskSync (django.test.TransactionTestCase):
     
     def test_download_error (self):
         with self.assertRaises(DownloadError):
-            compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ) )
+            compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ).serialize() )
         self.assertSubmission(
             SubmissionStatus.FAILED, SubmissionVerdict.JUDGE_ERROR)
     def test_compiles_properly (self):
         self.inmemory_storage.in_memory[ "in.cpp" ] = (b"int main () {}", ".cpp")
-        compilation_result = compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ) )
+        compilation_result = CompilationResult.deserialize(
+            compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ).serialize() ) )
         self.assertTrue(compilation_result.compilation_success)
         self.assertIsNone(compilation_result.error_message)
 
@@ -155,7 +156,8 @@ class TestICPCCompileTaskSync (django.test.TransactionTestCase):
     @patch("judge.languages.cpp.CppLanguage.get_compilation_command", new = custom_get_compilation_command)
     def test_uploaded_valid (self):
         self.inmemory_storage.in_memory[ "in.cpp" ] = (b"int main () {}", ".cpp")
-        compilation_result = compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ) )
+        compilation_result = CompilationResult.deserialize(
+            compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ).serialize() ) )
         self.assertTrue(compilation_result.compilation_success)
         self.assertIsNone(compilation_result.error_message)
 
@@ -165,7 +167,8 @@ class TestICPCCompileTaskSync (django.test.TransactionTestCase):
             SubmissionStatus.COMPILING, SubmissionVerdict.PENDING)
     def test_compilation_fails_properly (self):
         self.inmemory_storage.in_memory[ "in.cpp" ] = (b"char main () {}", ".cpp")
-        compilation_result = compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ) )
+        compilation_result = CompilationResult.deserialize(
+            compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ).serialize() ) )
         self.assertFalse(compilation_result.compilation_success)
         self.assertIn(b"'::main' must return 'int'", compilation_result.error_message)
         self.assertSubmission(
@@ -174,11 +177,11 @@ class TestICPCCompileTaskSync (django.test.TransactionTestCase):
     def test_compilation_failure (self):
         self.inmemory_storage.in_memory[ "in.cpp" ] = (b"int main () {}", ".cpp")
         with self.assertRaises(JudgeError):
-            compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ) )
+            compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ).serialize() )
         self.assertSubmission(
             SubmissionStatus.FAILED, SubmissionVerdict.JUDGE_ERROR)
 
     def test_does_not_exist (self):
         self.inmemory_storage.in_memory[ "in.cpp" ] = (b"int main () {}", ".cpp")
         with self.assertRaises(Submission.DoesNotExist):
-            compile_task( CompilationInput( self.pk + 1, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ) )
+            compile_task( CompilationInput( self.pk + 1, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ).serialize() )

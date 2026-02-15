@@ -11,6 +11,7 @@ output location.
 import asyncio
 import os
 import tempfile
+from typing import TypedDict
 
 from asgiref.sync import sync_to_async
 from django.conf import settings
@@ -24,6 +25,9 @@ from judge.error import JudgeError
 from judge.telemetry import start_as_current_span
 from storecli.error import DownloadError
 
+class s_CompilationResult (TypedDict):
+    compilation_success : bool
+    error_message       : "str | None"
 class CompilationResult:
     compilation_success : bool
     error_message       : "str | None"
@@ -33,7 +37,21 @@ class CompilationResult:
         if error_message is not None and len(error_message) >= settings.MAX_LEN_ERROR_MESSAGE:
             error_message = error_message[:settings.MAX_LEN_ERROR_MESSAGE] + b" ...[truncated]"
         self.error_message = error_message
+    def serialize (self) -> s_CompilationResult:
+        return { "compilation_success": self.compilation_success, "error_message": self.error_message }
+    @staticmethod
+    def deserialize (result: s_CompilationResult) -> "CompilationResult":
+        return CompilationResult( result["compilation_success"], result["error_message"] )
 
+class s_CompilationInput (TypedDict):
+    submission_id: int
+    input_storage: str
+    exec_storage:  str
+
+    language_kind: str
+
+    max_time:      float
+    max_wall_time: float
 class CompilationInput:
     submission_id: int
     input_storage: str
@@ -43,6 +61,28 @@ class CompilationInput:
 
     max_time:      float
     max_wall_time: float
+    
+    def serialize (self) -> s_CompilationInput:
+        return {
+            "submission_id": self.submission_id,
+            "input_storage": self.input_storage,
+            "exec_storage" : self.exec_storage,
+
+            "language_kind": self.language_kind.value,
+
+            "max_time": self.max_time,
+            "max_wall_time": self.max_wall_time
+        }
+    @staticmethod
+    def deserialize (result: s_CompilationInput) -> "CompilationInput":
+        return CompilationInput(
+            result["submission_id"],
+            result['input_storage'],
+            result["exec_storage"],
+            LanguageKind(result["language_kind"]),
+            result["max_time"],
+            result["max_wall_time"]
+        )
 
     def __init__(
             self,
@@ -63,8 +103,8 @@ class CompilationInput:
         self.max_wall_time = max_wall_time
         
 @judge_app.task
-def compile_task (params: CompilationInput):
-    return asyncio.run( _compile_task(params) )
+def compile_task (params: s_CompilationInput):
+    return asyncio.run( _compile_task(CompilationInput.deserialize(params)) ).serialize()
 
 async def _compile_task (params: CompilationInput) -> CompilationResult:
     try:
