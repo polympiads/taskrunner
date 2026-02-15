@@ -13,6 +13,7 @@ from django.test import override_settings
 from judge.languages import LanguageKind
 from judge.error import JudgeError
 from judge.tasks.icpc.compile import CompilationResult, _compile_task, compile_task, CompilationInput
+from problems.models.problem import Problem
 from storecli.error import DownloadError
 from storecli.inmemory import InMemoryStorageClient
 from submit.models.status import SubmissionStatus
@@ -34,6 +35,8 @@ class TestICPCCompileTask (django.test.TransactionTestCase):
         usr = User.objects.create_user( "user", password = "pass" )
         sub = Submission.objects.create(
             user = usr,
+            problem = Problem.objects.create(problem_location = None),
+            language = LanguageKind.CPP_23,
 
             code_location = "in.cpp",
             exec_location = "in"
@@ -116,6 +119,8 @@ class TestICPCCompileTaskSync (django.test.TransactionTestCase):
         usr = User.objects.create_user( "user", password = "pass" )
         sub = Submission.objects.create(
             user = usr,
+            problem = Problem.objects.create(problem_location = None),
+            language = LanguageKind.CPP_23,
 
             code_location = "in.cpp",
             exec_location = "in"

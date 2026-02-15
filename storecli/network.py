@@ -8,6 +8,7 @@ from storecli.base import BaseStorageClient
 from asgiref.sync import sync_to_async
 
 from storecli.error import DownloadError
+from storecli.telemetry import start_as_current_span
 
 class NetworkClient (BaseStorageClient):
     class InternalError (RuntimeError): pass
@@ -24,6 +25,7 @@ class NetworkClient (BaseStorageClient):
     def url (self, part: str):
         return self.prefix + part
 
+    @start_as_current_span("Network.upload")
     def sync_upload(self, file, location):
         with open(file, "rb") as file_reader:
             files = {
@@ -36,6 +38,7 @@ class NetworkClient (BaseStorageClient):
             
             if response.status_code != 200:
                 raise NetworkClient.InternalError(response.text)
+    @start_as_current_span("Network.download")
     def sync_download(self, location):
         with requests.get(
                 self.url( "/download/" ),
@@ -57,6 +60,7 @@ class NetworkClient (BaseStorageClient):
                     f.write(chunk)
 
             return file_path
+    @start_as_current_span("Network.delete")
     def sync_delete(self, location):
         response = requests.delete(
             self.url( "/delete/" ),
@@ -73,5 +77,5 @@ class NetworkClient (BaseStorageClient):
     async def delete(self, location):
         return await sync_to_async(NetworkClient.sync_delete)(self, location)
 
-    async def reserve(self):
+    def reserve(self):
         return str(uuid6.uuid7())

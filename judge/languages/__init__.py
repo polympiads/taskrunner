@@ -1,5 +1,5 @@
 
-import enum
+from django_enumfield import enum
 
 from judge.languages.base import Language
 from judge.languages.cpp import GNU_GPP_23

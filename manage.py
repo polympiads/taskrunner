@@ -4,9 +4,12 @@ import os
 import sys
 
 from opentelemetry.instrumentation.django import DjangoInstrumentor
+
 from telemetry import configure, TestConfig, Resource, SERVICE_NAME
 from telemetry import HttpConfig
 import logging
+
+from taskrunner.telemetry import init_telemetry
 
 def main():
     """Run administrative tasks."""
@@ -22,23 +25,9 @@ def main():
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
-    
-    if "SAMPLE_GRAFANA" in os.environ.keys():
-        config = HttpConfig( "http://host.docker.internal:4318" )
-        config.resource = Resource({ SERVICE_NAME: "service" })
-        config.loglevel = logging.DEBUG
-        configure(config)
-    else:
-        config = TestConfig()
-        config.resource = Resource({ SERVICE_NAME: "service" })
-        config.loglevel = logging.DEBUG
-        configure(config)
 
-    if "DEBUG_LOGS" in os.environ.keys():
-        logging.getLogger().addHandler( logging.StreamHandler() )
-
+    init_telemetry()
     execute_from_command_line(sys.argv)
-
 
 if __name__ == '__main__':
     main()

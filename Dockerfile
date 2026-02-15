@@ -34,6 +34,8 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir --break-system-packages -r requirements.txt
 COPY . .
 
+RUN python3 manage.py makemigrations
+
 ENV TEST_JUDGE=yes
 #ENV DEBUG_LOGS=yes
 #ENV SAMPLE_GRAFANA=yes

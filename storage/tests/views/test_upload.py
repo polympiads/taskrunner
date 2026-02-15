@@ -40,7 +40,7 @@ class FileUploadViewTest(TestCase):
         assert len(os.listdir(TEST_DIR)) == 1
         assert len(os.listdir(TEST_DIR + f"/{loc_v7[0:4]}")) == 1
         assert len(os.listdir(TEST_DIR + f"/{loc_v7[0:4]}/{loc_v7[4:6]}")) == 1
-        with open(TEST_DIR + f"/{loc_v7[0:4]}/{loc_v7[4:6]}/{loc_v7.replace("-","")}", "r") as file:
+        with open(TEST_DIR + f"/{loc_v7[0:4]}/{loc_v7[4:6]}/{loc_v7}", "r") as file:
             assert file.read() == "test code content"
         assert StorageEntry.objects.all().count() == 1
         entry = StorageEntry.objects.all()[0]

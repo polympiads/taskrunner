@@ -3,9 +3,11 @@ import unittest
 
 import django.test
 from django.contrib.auth.models import User
+from judge.languages import LanguageKind
 from judge.tasks.icpc.finalize import finalize_task
 from judge.tasks.icpc.subinfo import SubmissionInformation
 from judge.tasks.icpc.testoutput import TestCaseOutput
+from problems.models.problem import Problem
 from submit.models import Submission
 from submit.models.status import SubmissionStatus
 from submit.models.verdict import SubmissionVerdict, TestCaseVerdict
@@ -15,6 +17,8 @@ class TestFinalizeTask (django.test.TransactionTestCase):
         usr = User.objects.create_user( "user", password = "pass" )
         sub = Submission.objects.create(
             user = usr,
+            problem = Problem.objects.create(problem_location = None),
+            language = LanguageKind.CPP_23,
 
             code_location = "in.cpp",
             exec_location = "in"

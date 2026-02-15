@@ -9,5 +9,5 @@ class BaseStorageClient:
         raise NotImplementedError()
     async def delete (self, location: str):
         raise NotImplementedError()
-    async def reserve (self) -> str:
+    def reserve (self) -> str:
         raise NotImplementedError()

@@ -7,8 +7,6 @@ from django.db import models, transaction
 from problems.models.problem import Problem
 from django_enumfield import enum
 
-from asgiref.sync import sync_to_async
-
 class PreparationKind (enum.Enum):
     MANUAL  = 0
     POLYGON = 1
@@ -22,29 +20,30 @@ class PreparationStatus (enum.Enum):
 class PreparationManager (models.Manager):
     @staticmethod
     def create_polygon_preparation (problem: Problem, polygon_pkg: str) -> "Tuple[Preparation, PolygonPreparation]":
-        final_storage: str = asyncio.run( settings.STORAGE_CLIENT.reserve() )
-        
-        preparation = Preparation.objects.create(
-            problem = problem,
-            storage = final_storage,
-            kind    = PreparationKind.POLYGON,
-            status  = PreparationStatus.PENDING
-        )
-        polygon_preparation = PolygonPreparation.objects.create(
-            preparation = preparation,
-            pkg_storage = polygon_pkg
-        )
+        with transaction.atomic():
+            final_storage: str = settings.STORAGE_CLIENT.reserve()
+            
+            preparation = Preparation.objects.create(
+                problem = problem,
+                storage = final_storage,
+                kind    = PreparationKind.POLYGON,
+                status  = PreparationStatus.PENDING
+            )
+            polygon_preparation = PolygonPreparation.objects.create(
+                preparation = preparation,
+                pkg_storage = polygon_pkg
+            )
 
-        from problems.tasks.polygon.prepare import prepare_polygon_problem
-        
-        prepare_polygon_problem.delay(
-            problem.pk,
-            preparation.pk,
-            polygon_pkg,
-            final_storage
-        )
+            from problems.tasks.polygon.prepare import prepare_polygon_problem
+            
+            prepare_polygon_problem.delay_on_commit(
+                problem.pk,
+                preparation.pk,
+                polygon_pkg,
+                final_storage
+            )
 
-        return (preparation, polygon_preparation)
+            return (preparation, polygon_preparation)
 
     @staticmethod
     def set_preparation_status (id: int, status: PreparationStatus):

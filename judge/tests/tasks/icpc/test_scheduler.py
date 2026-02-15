@@ -9,6 +9,7 @@ from django.test import override_settings
 from judge.languages import LanguageKind
 from judge.tasks.icpc.compile import CompilationResult
 from judge.tasks.icpc.scheduler import scheduler_task
+from problems.models.problem import Problem
 from storecli.error import DownloadError
 from submit.models.status import SubmissionStatus
 from submit.models.submission import Submission
@@ -78,6 +79,8 @@ class TestScheduler(django.test.TransactionTestCase):
         usr = User.objects.create_user( "user", password = "pass" )
         sub = Submission.objects.create(
             user = usr,
+            problem = Problem.objects.create(problem_location = None),
+            language = LanguageKind.CPP_23,
 
             code_location = "in.cpp",
             exec_location = "in"

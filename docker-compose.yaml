@@ -1,0 +1,148 @@
+
+# This docker compose is used to open a shell in a sample integrated context
+services:
+  grafana:
+    image: grafana/otel-lgtm:latest
+    networks:
+      net0:
+        aliases:
+          - otel.polympiads.ch
+    ports:
+      - "3000:3000"
+  broker:
+    image: rabbitmq:latest
+    networks:
+      net0:
+        aliases:
+          - broker.polympiads.ch
+  backend:
+    image: redis:latest
+    networks:
+      net0:
+        aliases:
+          - backend.polympiads.ch
+  postgresql:
+    image: postgres:14.21-trixie
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: polympiads
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d polympiads"]
+      interval: 5s    # How often to check
+      timeout: 5s     # How long to wait for a response
+      retries: 5      # How many failures before giving up
+    networks:
+      net0:
+        aliases:
+          - db.polympiads.ch
+
+
+
+
+  migrate:
+    image: polympiads/taskrunner
+    command: python3 manage.py migrate
+    environment:
+      DJANGO_SETTINGS_MODULE: taskrunner.sample_settings.base
+      POSTGRES_DB: polympiads
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST: db.polympiads.ch
+      POSTGRES_PORT: 5432
+      SAMPLE_GRAFANA: yes
+      SERVICE: migrate
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    networks:
+      - net0
+
+
+
+
+  storage:
+    image: polympiads/taskrunner
+    command: python3 manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_SETTINGS_MODULE: taskrunner.sample_settings.base
+      POSTGRES_DB: polympiads
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST: db.polympiads.ch
+      POSTGRES_PORT: 5432
+      SAMPLE_GRAFANA: yes
+      SERVICE: storage
+    networks:
+      net0:
+        aliases:
+          - storage.polympiads.ch
+    depends_on:
+      postgresql:
+        condition: service_started
+      broker:
+        condition: service_started
+      backend:
+        condition: service_started
+      grafana:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+  runner:
+    image: polympiads/taskrunner
+    privileged: true
+    command: celery -A taskrunner worker -l INFO
+    environment:
+      DJANGO_SETTINGS_MODULE: taskrunner.sample_settings.base
+      POSTGRES_DB: polympiads
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST: db.polympiads.ch
+      POSTGRES_PORT: 5432
+      SAMPLE_GRAFANA: yes
+      SERVICE: runner0
+    networks:
+      net0:
+        aliases:
+          - run0.polympiads.ch
+    depends_on:
+      postgresql:
+        condition: service_started
+      broker:
+        condition: service_started
+      backend:
+        condition: service_started
+      grafana:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+  web:
+    image: polympiads/taskrunner
+    command: python3 manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_SETTINGS_MODULE: taskrunner.sample_settings.base
+      POSTGRES_DB: polympiads
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST: db.polympiads.ch
+      POSTGRES_PORT: 5432
+      SAMPLE_GRAFANA: yes
+      SERVICE: web
+    networks:
+      net0:
+        aliases:
+          - web.polympiads.ch
+    depends_on:
+      postgresql:
+        condition: service_started
+      broker:
+        condition: service_started
+      backend:
+        condition: service_started
+      grafana:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+
+networks:
+  net0:
+    driver: bridge

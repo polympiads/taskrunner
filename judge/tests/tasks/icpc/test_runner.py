@@ -13,6 +13,7 @@ from judge.tasks.icpc.subinfo import SubmissionInformation
 from judge.tasks.icpc.testoutput import TestCaseOutput, flatten_test_cases_output
 from judge.tasks.icpc.testrunner import run_tests_task
 from judge.tests.languages.test_cpp import APLUSB_PROG
+from problems.models.problem import Problem
 from problems.tests.tasks.polygon.test_prepare import compile_polygon_packages, setup_polygon_packages
 from sandbox.result import SandboxStatistics
 from sandbox.sandbox import Sandbox
@@ -134,6 +135,10 @@ class TestTestRunnerTask (django.test.TransactionTestCase):
         usr = User.objects.create_user( "user", password = "pass" )
         submission = Submission.objects.create(
             user = usr,
+            problem = Problem.objects.create(problem_location = None),
+            language = LanguageKind.CPP_23,
+            code_location = "",
+            exec_location = ""
         )
 
         self.pk = submission.pk

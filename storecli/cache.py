@@ -19,5 +19,5 @@ class CacheClient(BaseStorageClient):
         return await self.client.upload(file, location)
     async def delete(self, location):
         return await self.client.delete(location)
-    async def reserve(self):
-        return await self.client.reserve()
+    def reserve(self):
+        return self.client.reserve()

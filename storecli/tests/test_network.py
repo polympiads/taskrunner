@@ -98,4 +98,4 @@ class TestNetworkClient(LiveServerTestCase):
             uuid7.return_value = "hi"
 
             self.assertEqual(
-                asyncio.run( self.net_client.reserve() ), "hi" )
+                self.net_client.reserve(), "hi" )

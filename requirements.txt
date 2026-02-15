@@ -11,9 +11,11 @@ aiofiles
 celery[redis]
 celery[pytest]
 opentelemetry-instrumentation-celery
+opentelemetry-instrumentation-requests
 
 django
 opentelemetry-instrumentation-django
 django-enumfield
 uuid6
 requests
+psycopg[binary]

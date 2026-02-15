@@ -13,4 +13,4 @@ class TestBaseStorageClient (unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(NotImplementedError):
             await BaseStorageClient().delete( "python3" )
         with self.assertRaises(NotImplementedError):
-            await BaseStorageClient().reserve()
+            BaseStorageClient().reserve()

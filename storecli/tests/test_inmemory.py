@@ -37,4 +37,4 @@ class TestInMemoryStorageClient(unittest.IsolatedAsyncioTestCase):
     async def test_reserve (self):
         with patch("storecli.inmemory.uuid") as uuid:
             uuid.uuid4 = lambda : "hi"
-            self.assertEqual( await self.client.reserve(), "hi" )
+            self.assertEqual( self.client.reserve(), "hi" )
