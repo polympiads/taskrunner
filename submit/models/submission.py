@@ -12,48 +12,58 @@ from submit.models.verdict import SubmissionVerdict
 
 from django.db import transaction
 
-# class SubmissionManager (models.Manager):
-#     def create_submission (
-#         self,
-#         user    : User,
-#         problem : Problem,
-# 
-#         code_location : str,
-# 
-#         language_kind : LanguageKind
-#     ):
-#         with transaction.atomic():
-#             language = get_language(language_kind)
-# 
-#             exec_location = code_location
-# 
-#             submission = Submission.objects.create(
-#                 user    = user,
-#                 problem = problem,
-# 
-#                 code_location = code_location,
-#                 exec_location = exec_location,
-# 
-#                 language = language
-#             )
-# 
-#             from judge.tasks.icpc.compile   import compile_task
-#             from judge.tasks.icpc.scheduler import scheduler_task
-# 
-#             from judge.tasks.icpc.compile import CompilationInput, CompilationResult
-#             from judge.tasks.icpc.subinfo import SubmissionInformation
-# 
-#             scheduler_task.delay_on_commit(
-#                 CompilationResult(),
-#                 SubmissionInformation(
-#                     submission.pk,
-#                     problem.problem_location,
-#                     exec_location,
-#                     language_kind
-#                 )
-#             )
-# 
-#             return submission
+class SubmissionManager (models.Manager):
+    def create_submission (
+        self,
+        user    : User,
+        problem : Problem,
+
+        code_location : str,
+
+        language_kind : LanguageKind
+    ):
+        with transaction.atomic():
+            language = get_language(language_kind)
+
+            exec_location = settings.STORAGE_CLIENT.reserve()
+
+            submission = Submission.objects.create(
+                user    = user,
+                problem = problem,
+
+                code_location = code_location,
+                exec_location = exec_location,
+
+                language = language_kind
+            )
+
+            from judge.tasks.icpc.compile   import compile_task
+            from judge.tasks.icpc.scheduler import scheduler_task
+
+            from judge.tasks.icpc.compile import CompilationInput, CompilationResult
+            from judge.tasks.icpc.subinfo import SubmissionInformation
+
+            signature = chain(
+                compile_task.s( CompilationInput(
+                    submission.id,
+                    code_location,
+                    exec_location,
+                    language_kind,
+                    1.,
+                    1.
+                ).serialize() ),
+                scheduler_task.s(
+                    SubmissionInformation(
+                        submission.pk,
+                        problem.problem_location,
+                        exec_location,
+                        language_kind
+                    ).serialize()
+                )
+            )
+            transaction.on_commit(lambda : signature.apply_async())
+
+            return submission
 
 class Submission (models.Model):
     user = models.ForeignKey(User, on_delete = models.PROTECT)
@@ -69,7 +79,7 @@ class Submission (models.Model):
 
     first_wrong_test = models.IntegerField( default = -1 )
 
-    # objects : "models.Manager[Submission] | SubmissionManager" = SubmissionManager()
+    objects : "models.Manager[Submission] | SubmissionManager" = SubmissionManager()
 
     @staticmethod
     def set_submission_information (

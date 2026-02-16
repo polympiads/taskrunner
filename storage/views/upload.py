@@ -17,7 +17,7 @@ class FileUploadView (View):
             return location_response
         
         extension : str = request.GET.get('extension')
-        if not extension:
+        if extension is None:
             return HttpResponseBadRequest("missing 'extension' from GET parameters")
 
         uploaded_file = request.FILES.get('file')

@@ -12,7 +12,7 @@ from storecli.inmemory import InMemoryStorageClient
 from storecli.problems.storage import ProblemStorage
 
 
-SAMPLE1_PATH = "/tests/sample1.zip"
+SAMPLE1_PATH = "/app/tests/sample1.zip"
 def prepare_sample1 ():
     if os.path.exists(SAMPLE1_PATH): return
 

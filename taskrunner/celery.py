@@ -1,4 +1,5 @@
 
+from multiprocessing import current_process
 import os
 from django.conf import settings
 from celery      import Celery
@@ -20,3 +21,13 @@ judge_app.autodiscover_tasks()
 @worker_process_init.connect
 def setup_worker (**kwargs):
     init_telemetry()
+
+    process_name = current_process().name
+    try:
+        process_id = int(process_name.split("-")[-1])
+        from sandbox.manager import SandboxManager
+
+        SandboxManager.instance().setup_worker(process_id)
+    except Exception as err:
+        print("Invalid process name, should be of the form 'Something-<UUID>'")
+        raise err

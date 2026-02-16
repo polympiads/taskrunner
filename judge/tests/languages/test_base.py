@@ -84,7 +84,7 @@ class BaseLanguageTest:
     async def test_hello_world (self):
         with start_as_current_span("test_hello_world"):
             sb, cmd = await self.internal_execute(
-                f"/progs/{self.folder}/{self.name_hello_world()}.{self.ext}",
+                f"/app/progs/{self.folder}/{self.name_hello_world()}.{self.ext}",
                 self.hello_world()
             )
 
@@ -95,7 +95,7 @@ class BaseLanguageTest:
     async def test_nplus1 (self):
         with start_as_current_span("test_nplus1"):
             sb, cmd = await self.internal_execute(
-                f"/progs/{self.folder}/{self.name_nplus1()}.{self.ext}",
+                f"/app/progs/{self.folder}/{self.name_nplus1()}.{self.ext}",
                 self.nplus1()
             )
 
@@ -107,7 +107,7 @@ class BaseLanguageTest:
     async def test_aplusb (self):
         with start_as_current_span("test_aplusb"):
             sb, cmd = await self.internal_execute(
-                f"/progs/{self.folder}/{self.name_aplusb()}.{self.ext}",
+                f"/app/progs/{self.folder}/{self.name_aplusb()}.{self.ext}",
                 self.aplusb()
             )
 

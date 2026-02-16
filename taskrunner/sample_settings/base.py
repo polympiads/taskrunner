@@ -166,9 +166,9 @@ JAR_COMPILER = "/usr/bin/jar"
 JAVA_EXECUTABLE = "/usr/bin/java"
 
 PROBLEM_STORAGE_LOCATION = "/problems"
-STORAGE_SERVER_LOCATION  = "/storage/server"
-STORAGE_CLIENT_LOCATION  = "/storage/client"
-STORAGE_CLIENT  = CacheClient( NetworkClient( "http://storage.polympiads.ch:8000", STORAGE_CLIENT_LOCATION ) )
+STORAGE_SERVER_LOCATION  = "/app/storage/server"
+STORAGE_CLIENT_LOCATION  = "/app/storage/client"
+STORAGE_CLIENT  = CacheClient( NetworkClient( "http://app/storage.polympiads.ch:8000", STORAGE_CLIENT_LOCATION ) )
 
 ROOT_URLCONF = 'storage.urls'
 

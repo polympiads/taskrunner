@@ -15,6 +15,12 @@ class SandboxManager:
             for idx in range(settings.MAX_NB_SANDBOX):
                 self.ids_queue.put_nowait(idx)
 
+    def setup_worker (self, worker_id: int):
+        while not self.ids_queue.empty():
+            self.ids_queue.get_nowait()
+        for idx in range(settings.MAX_NB_SANDBOX):
+            self.ids_queue.put_nowait(idx + worker_id * settings.MAX_NB_SANDBOX)
+
     async def allocate_id (self) -> int:
         return await self.ids_queue.get()
     async def free_id (self, idx: int):

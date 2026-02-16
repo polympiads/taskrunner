@@ -22,7 +22,7 @@ services:
         aliases:
           - backend.polympiads.ch
   postgresql:
-    image: postgres:14.21-trixie
+    image: postgres:17.8-trixie
     environment:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: polympiads

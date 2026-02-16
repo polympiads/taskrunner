@@ -46,12 +46,22 @@ async def run_test (
         run_span.set_attribute("eval:sandbox:stderr", eval_results.sandbox_stderr)
         
         os.chmod(test_stdout, 0o644)
+
+        def crop_bytes (bytes: "bytes | None", max_cnt = 1024):
+            if bytes is None:
+                return None
+            return bytes[:max_cnt]
+
+        def setup_judge_error_attributes ():
+            run_span.set_attribute("eval:process:stdout", crop_bytes(eval_results.process_stdout))
+            run_span.set_attribute("eval:process:stderr", crop_bytes(eval_results.process_stderr))
         
         if eval_results.process.returncode != 0:
             if eval_results.statistics.exit_code == 127:
                 judge_logger.critical(
                     "Judge Error (error code 127) #%s, likely missing executable",
                     test, extra = { "submission-id": submission.submission_id } )
+                setup_judge_error_attributes()
                 raise JudgeError(eval_results, "Probably missing executable")
             if eval_results.statistics.status == "TO":
                 judge_logger.info(
@@ -75,6 +85,7 @@ async def run_test (
             judge_logger.critical(
                 "Judge Error (Unknown error) #%s",
                 test, extra = { "submission-id": submission.submission_id } )
+            setup_judge_error_attributes()
             raise JudgeError(eval_results, "Unknown evaluation error")
 
         await sb_check.prepare_for_stdin( test_input,  "prog_in.txt" )
@@ -85,6 +96,10 @@ async def run_test (
         run_span.add_event("Checker finished")
         run_span.set_attribute("checker:sandbox:stdout", check_results.sandbox_stdout)
         run_span.set_attribute("checker:sandbox:stderr", check_results.sandbox_stderr)
+        
+        def setup_judge_error_attributes ():
+            run_span.set_attribute("checker:process:stdout", crop_bytes(check_results.process_stdout))
+            run_span.set_attribute("checker:process:stderr", crop_bytes(check_results.process_stderr))
 
         if check_results.process.returncode != 0:
             if check_results.statistics.exit_code in [1, 2]: # Wrong Answer & Presentation Error
@@ -97,8 +112,10 @@ async def run_test (
                 judge_logger.critical(
                     "Judge Error (error code 127) #%s, likely missing checker",
                     test, extra = { "submission-id": submission.submission_id } )
+                setup_judge_error_attributes()
                 raise JudgeError(check_results, "Probably missing checker")
 
+            setup_judge_error_attributes()
             raise JudgeError(check_results, "Unknown checker error")
         
         tests_already_done.append( TestCaseOutput( test, TestCaseVerdict.ACCEPTED ) )

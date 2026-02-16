@@ -16,11 +16,11 @@ class TestNetworkClient(LiveServerTestCase):
     urls = 'storage.urls'
 
     def setUp(self):
-        self.net_client = NetworkClient( self.live_server_url, "/network_storage" )
+        self.net_client = NetworkClient( self.live_server_url, "/app/network_storage" )
     
     def test_prefix (self):
-        net_client1 = NetworkClient( self.live_server_url, "/network_storage" )
-        net_client2 = NetworkClient( self.live_server_url + "/", "/network_storage" )
+        net_client1 = NetworkClient( self.live_server_url, "/app/network_storage" )
+        net_client2 = NetworkClient( self.live_server_url + "/", "/app/network_storage" )
 
         self.assertEqual(net_client1.prefix, net_client2.prefix)
         self.assertEqual(net_client1.prefix, self.live_server_url)
@@ -50,7 +50,7 @@ class TestNetworkClient(LiveServerTestCase):
 
         asyncio.run( self.net_client.upload(__file__, self.uuid) )
         custom_path = asyncio.run( self.net_client.download(self.uuid) )
-        self.assertEqual( custom_path, f"/network_storage/0123/45/{self.uuid}.py" )
+        self.assertEqual( custom_path, f"/app/network_storage/0123/45/{self.uuid}.py" )
         with open(__file__, "rb") as file:
             text_expects = file.read()
         with open(custom_path, "rb") as file:

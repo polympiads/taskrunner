@@ -154,8 +154,8 @@ JAR_COMPILER = "/usr/bin/jar"
 JAVA_EXECUTABLE = "/usr/bin/java"
 
 STORAGE_CLIENT  = BaseStorageClient()
-PROBLEM_STORAGE_LOCATION = "/problems"
-STORAGE_SERVER_LOCATION  = "/storage/server"
+PROBLEM_STORAGE_LOCATION = "/app/problems"
+STORAGE_SERVER_LOCATION  = "/app/app/storage/server"
 
 CELERY_BACKEND = "redis://localhost:6379/0"
 CELERY_BROKER  = "pyamqp://guest@localhost//"

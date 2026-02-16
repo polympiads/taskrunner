@@ -44,5 +44,5 @@ class Command (BaseCommand):
                 user,
                 problem,
                 code_location,
-                LanguageKind.PYTHON # TODO automatically determine the LanguageKind
+                LanguageKind.CPP_23 # TODO automatically determine the LanguageKind
             )

@@ -57,3 +57,10 @@ class TestSandboxManager (unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(asyncio.TimeoutError):
             async with asyncio.timeout(0.25):
                 _, res = await asyncio.gather( free_back_0(), manager.allocate_id() )
+
+    async def test_reset (self):
+        manager = SandboxManager().instance()
+        manager.setup_worker(3)
+
+        for i in range (settings.MAX_NB_SANDBOX * 3, settings.MAX_NB_SANDBOX * 4):
+            self.assertEqual( await manager.allocate_id(), i )

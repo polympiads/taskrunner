@@ -52,7 +52,10 @@ class NetworkClient (BaseStorageClient):
             if extension is None:
                 raise DownloadError("missing extension header")
             
-            file_path = path_from_location(location, self.storage_path) + extension
+            # The post path allows to avoid a download overriding a file from
+            # another worker process when they are running at the same time
+            post_path = "-" + str(uuid6.uuid7())
+            file_path = path_from_location(location, self.storage_path) + post_path + extension
             os.makedirs( os.path.dirname(file_path), exist_ok=True )
 
             with open(file_path, 'wb') as f:
