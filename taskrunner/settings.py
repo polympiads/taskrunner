@@ -152,6 +152,7 @@ CXX_COMPILER = "/usr/bin/g++"
 JAVA_COMPILER = "/usr/bin/javac"
 JAR_COMPILER = "/usr/bin/jar"
 JAVA_EXECUTABLE = "/usr/bin/java"
+JVM_DIRECTORIES = [ "/etc/alternatives", "/usr/lib/jvm", "/etc/java-21-openjdk/" ]
 
 STORAGE_CLIENT  = BaseStorageClient()
 PROBLEM_STORAGE_LOCATION = "/app/problems"

@@ -9,8 +9,6 @@ from sandbox.sandbox import Sandbox
 class PythonLanguage (Language):
     def language_name(self):
         return "Python"
-    async def compile(self, file: str, storage: str):
-        return False
     
     def get_execution_command (self, filename: str):
         return [settings.PYTHON_EXECUTABLE, filename]

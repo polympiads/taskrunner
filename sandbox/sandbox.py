@@ -107,7 +107,11 @@ class Sandbox:
             stderr: "str | None" = "err.txt",
 
             num_process : "int | None" = None,
-            env_vars : "List[Tuple[str, str]]" = []
+            env_vars : "List[Tuple[str, str]]" = [],
+            directories : "List[str | Tuple[str, str]]" = [],
+
+            enable_simple_memory : bool = True,
+            enable_cgroup_memory : bool = True
         ):
         if self.box_id == -1:
             raise SandboxUseAfterFree()
@@ -123,7 +127,10 @@ class Sandbox:
                     time, wall_time, extra_time,
                     memory,
                     stdin, stdout, stderr,
-                    num_process, env_vars
+                    num_process, env_vars,
+                    directories,
+                    enable_simple_memory,
+                    enable_cgroup_memory
                 )
                 
                 proc, sb_stdout, sb_stderr = await run_subprocess_command(*isolate_command)

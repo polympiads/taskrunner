@@ -19,3 +19,6 @@ django-enumfield
 uuid6
 requests
 psycopg[binary]
+
+tree-sitter
+tree-sitter-java

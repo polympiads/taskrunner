@@ -9,6 +9,7 @@ from django.conf import settings
 
 from judge.error import JudgeError
 from judge.languages import get_language
+from judge.languages.base import Language
 from judge.languages.cpp import GNU_GPP_23
 from judge.tasks.icpc.subinfo import SubmissionInformation, s_SubmissionInformation
 from judge.tasks.icpc.testoutput import TestCaseOutput, TestCasesOutput, deserialize_outputs, flatten_test_cases_output, get_test_cases_verdict, s_TestCasesOutput, serialize_outputs
@@ -31,6 +32,8 @@ async def run_test (
         
         submission: SubmissionInformation,
         tests_already_done: List[TestCasesOutput],
+
+        language: Language,
         
         time_limit: float,
         memory_limit: int) -> bool:
@@ -48,7 +51,11 @@ async def run_test (
             stdout="out.txt",
             time=time_limit,
             memory=memory_limit,
-            wall_time=time_limit + settings.WALL_TIME_ADDITIONAL )
+            wall_time=time_limit + settings.WALL_TIME_ADDITIONAL,
+            num_process=language.number_execution_processes(),
+            directories=language.extra_execution_directories(),
+            enable_simple_memory=language.enable_simple_memory(),
+            enable_cgroup_memory=language.enable_cgroup_memory() )
         test_stdout  = sb_eval.path_relative_to_cwd("out.txt")
         run_span.add_event("Evaluation finished")
         run_span.set_attribute("eval:sandbox:stdout", eval_results.sandbox_stdout)
@@ -204,6 +211,7 @@ async def _run_tests_task (
                     sb_check, cmd_check,
                     submission,
                     tests_already_done,
+                    language,
 
                     time_limit   = problem.get_time_limit(),
                     memory_limit = problem.get_memory_limit()

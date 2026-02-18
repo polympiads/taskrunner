@@ -43,7 +43,7 @@ async def run_checker_compilation (unzippedFolder: str, resultFolder: str, probl
 
             os.link(testlib_out, testlib_inside)
         
-        success, result = await GNU_GPP_23.compile(
+        success, result, errmsg = await GNU_GPP_23.compile(
             os.path.join(unzippedFolder, problem.checker),
             os.path.join(resultFolder, "checker"),
             copy_testlib_in_sandbox

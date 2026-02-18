@@ -13,6 +13,7 @@ from django.test import override_settings
 from judge.languages import LanguageKind
 from judge.error import JudgeError
 from judge.tasks.icpc.compile import CompilationResult, _compile_task, compile_task, CompilationInput
+from judge.tests.languages.test_java import MISSING_MAIN
 from problems.models.problem import Problem
 from storecli.error import DownloadError
 from storecli.inmemory import InMemoryStorageClient
@@ -171,6 +172,14 @@ class TestICPCCompileTaskSync (django.test.TransactionTestCase):
             compile_task( CompilationInput( self.pk, "in.cpp", "in", LanguageKind.CPP_23, 1., 1. ).serialize() ) )
         self.assertFalse(compilation_result.compilation_success)
         self.assertIn(b"'::main' must return 'int'", compilation_result.error_message)
+        self.assertSubmission(
+            SubmissionStatus.FINISHED, SubmissionVerdict.COMPILER_ERROR)
+    def test_java_compilation_fails_properly (self):
+        self.inmemory_storage.in_memory[ "in.java" ] = (MISSING_MAIN.encode(), ".java")
+        compilation_result = CompilationResult.deserialize(
+            compile_task( CompilationInput( self.pk, "in.java", "in.jar", LanguageKind.JAVA, 1., 1. ).serialize() ) )
+        self.assertFalse(compilation_result.compilation_success)
+        self.assertIn("Could not find class with public static void main.", compilation_result.error_message)
         self.assertSubmission(
             SubmissionStatus.FINISHED, SubmissionVerdict.COMPILER_ERROR)
     @patch("judge.languages.cpp.CppLanguage.get_compilation_command", new = custom_get_compilation_command_fail)

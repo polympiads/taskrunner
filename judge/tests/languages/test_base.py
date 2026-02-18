@@ -55,7 +55,9 @@ class BaseLanguageTest:
             file_exe = file_exe + "." + self.exe_ext
 
         file_tar = file # interpreter
-        if await self.language.compile(file, file_exe):
+        if self.language.should_compile():
+            success, results, errstring = await self.language.compile(file, file_exe)
+            assert success, results.sandbox_stdout + results.sandbox_stderr + results.process_stdout + results.process_stderr
             file_tar = file_exe # compiled 
 
         return await self.language.execute(file_tar)
@@ -74,7 +76,13 @@ class BaseLanguageTest:
         async with aiofiles.open(sandbox.path_relative_to_cwd("in.txt"), "w") as fw:
             await fw.write(input)
         
-        results = await sandbox.run_sandbox(command, stdin = "in.txt")
+        results = await sandbox.run_sandbox(
+            command,
+            stdin = "in.txt",
+            num_process = self.language.number_execution_processes(),
+            directories = self.language.extra_execution_directories(),
+            enable_simple_memory=self.language.enable_simple_memory(),
+            enable_cgroup_memory=self.language.enable_cgroup_memory())
         self.assertEqual( results.statistics.exit_code, exitcode )
         self.assertEqual( 
             results.process_stdout,

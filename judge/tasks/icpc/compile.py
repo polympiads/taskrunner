@@ -127,12 +127,15 @@ async def _compile_task (params: CompilationInput) -> CompilationResult:
 
                 language = get_language( params.language_kind )
 
-                success, results = await language.compile( target_file, temporary_storage )
+                success, results, err_string = await language.compile( target_file, temporary_storage )
                 if not success:
                     await sync_to_async(Submission.set_submission_information)(
                         params.submission_id,
                         status = SubmissionStatus.FINISHED,
                         verdict = SubmissionVerdict.COMPILER_ERROR )
+                    
+                    if err_string is not None:
+                        return CompilationResult(False, err_string)
                     return CompilationResult(
                         False,
                         results.process_stdout
