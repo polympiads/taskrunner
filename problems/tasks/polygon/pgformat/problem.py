@@ -43,7 +43,9 @@ def read_polygon_problem (path: str):
             # the timelimit is in milliseconds, so convert to seconds
             problem.timelimit = int(x.text) / 1000
         if x.tag == "memory-limit":
-            problem.memlimit = int(x.text)
+            # memory limit in package is in bytes
+            # memory limit for isolate is in kbytes
+            problem.memlimit = int(x.text) // 1024
 
     explore(root)
     
