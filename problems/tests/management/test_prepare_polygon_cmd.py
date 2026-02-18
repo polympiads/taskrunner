@@ -9,6 +9,9 @@ from problems.models.problem import Problem
 from storecli.inmemory import InMemoryStorageClient
 from storecli.problems.storage import ProblemStorage
 
+tests_folder = os.path.dirname(os.path.dirname(__file__))
+APLUSB_FILE = os.path.join(tests_folder, "tasks", "polygon", "assets", "a-plus-b.zip")
+
 class TestPreparePolygonCommand (TransactionTestCase):
     def setUp(self):
         self.inmemory_storage = InMemoryStorageClient("/tmp")
@@ -25,11 +28,8 @@ class TestPreparePolygonCommand (TransactionTestCase):
     def test_file_exists (self):
         problem = Problem.objects.create()
 
-        tests_folder = os.path.dirname(os.path.dirname(__file__))
-        aplusb_file = os.path.join(tests_folder, "tasks", "polygon", "assets", "a-plus-b.zip")
-
         with eager_celery():
-            call_command("prepare_polygon", problem.pk, aplusb_file)
+            call_command("prepare_polygon", problem.pk, APLUSB_FILE)
 
         problem = Problem.objects.get(pk = problem.pk)
         self.assertIsNotNone(problem.problem_location, None)

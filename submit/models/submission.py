@@ -25,7 +25,9 @@ class SubmissionManager (models.Manager):
         with transaction.atomic():
             language = get_language(language_kind)
 
-            exec_location = settings.STORAGE_CLIENT.reserve()
+            exec_location = code_location
+            if language.should_compile():
+                exec_location = settings.STORAGE_CLIENT.reserve()
 
             submission = Submission.objects.create(
                 user    = user,
@@ -43,16 +45,29 @@ class SubmissionManager (models.Manager):
             from judge.tasks.icpc.compile import CompilationInput, CompilationResult
             from judge.tasks.icpc.subinfo import SubmissionInformation
 
-            signature = chain(
-                compile_task.s( CompilationInput(
-                    submission.id,
-                    code_location,
-                    exec_location,
-                    language_kind,
-                    1.,
-                    1.
-                ).serialize() ),
-                scheduler_task.s(
+            if language.should_compile():
+                signature = chain(
+                    compile_task.s( CompilationInput(
+                        submission.id,
+                        code_location,
+                        exec_location,
+                        language_kind,
+                        1.,
+                        1.
+                    ).serialize() ),
+                    scheduler_task.s(
+                        SubmissionInformation(
+                            submission.pk,
+                            problem.problem_location,
+                            exec_location,
+                            language_kind
+                        ).serialize()
+                    )
+                )
+                transaction.on_commit(lambda : signature.apply_async())
+            else:
+                scheduler_task.delay_on_commit(
+                    CompilationResult().serialize(),
                     SubmissionInformation(
                         submission.pk,
                         problem.problem_location,
@@ -60,8 +75,6 @@ class SubmissionManager (models.Manager):
                         language_kind
                     ).serialize()
                 )
-            )
-            transaction.on_commit(lambda : signature.apply_async())
 
             return submission
 

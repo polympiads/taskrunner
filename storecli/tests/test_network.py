@@ -50,7 +50,9 @@ class TestNetworkClient(LiveServerTestCase):
 
         asyncio.run( self.net_client.upload(__file__, self.uuid) )
         custom_path = asyncio.run( self.net_client.download(self.uuid) )
-        self.assertEqual( custom_path, f"/app/network_storage/0123/45/{self.uuid}.py" )
+        self.assertTrue( custom_path.startswith(f"/app/network_storage/0123/45/{self.uuid}-") )
+        self.assertTrue( custom_path.endswith(".py") )
+        self.assertEqual( len(custom_path), 105 )
         with open(__file__, "rb") as file:
             text_expects = file.read()
         with open(custom_path, "rb") as file:

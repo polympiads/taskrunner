@@ -35,11 +35,11 @@ def scheduler_task (
         compilation_result : s_CompilationResult,
         submission_info    : s_SubmissionInformation
         ):
-    return asyncio.run( _scheduler_task(
+    return _scheduler_task(
         CompilationResult.deserialize(compilation_result),
-        SubmissionInformation.deserialize(submission_info)) )
+        SubmissionInformation.deserialize(submission_info))
 
-async def _scheduler_task (
+def _scheduler_task (
         compilation_result : CompilationResult,
         submission_info    : SubmissionInformation
         ):
@@ -53,7 +53,7 @@ async def _scheduler_task (
             return
         
         try:
-            problem = await ProblemStorage.download( submission_info.problem_location )
+            problem = asyncio.run( ProblemStorage.download( submission_info.problem_location ) )
             
             test_count = problem.get_number_tests()
             span.set_attribute("problem:test-count", test_count)
@@ -69,7 +69,7 @@ async def _scheduler_task (
                 batches_as_strings.append(f"range({start}, {end})")
             span.set_attribute("evaluation:batches", batches_as_strings)
 
-            await sync_to_async(Submission.set_submission_information)(
+            Submission.set_submission_information(
                 submission_info.submission_id,
                 status  = SubmissionStatus.RUNNING
             )
@@ -81,7 +81,7 @@ async def _scheduler_task (
                 submission_info.submission_id
             )
 
-            await sync_to_async(Submission.set_submission_information)(
+            Submission.set_submission_information(
                 submission_info.submission_id,
                 status  = SubmissionStatus.FAILED,
                 verdict = SubmissionVerdict.JUDGE_ERROR

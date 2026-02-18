@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.management import BaseCommand
 from django.contrib.auth.models import User
 
-from judge.languages import LanguageKind
+from judge.languages import LanguageKind, get_language_kind_from_extension
 from problems.models.preparation import Preparation
 from problems.models.problem import Problem
 from problems.telemetry import start_as_current_span
@@ -44,5 +44,7 @@ class Command (BaseCommand):
                 user,
                 problem,
                 code_location,
-                LanguageKind.CPP_23 # TODO automatically determine the LanguageKind
+                get_language_kind_from_extension(
+                    os.path.splitext(submission)[1]
+                )
             )

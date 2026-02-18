@@ -48,8 +48,7 @@ async def run_test (
         os.chmod(test_stdout, 0o644)
 
         def crop_bytes (bytes: "bytes | None", max_cnt = 1024):
-            if bytes is None:
-                return None
+            if bytes is None: return None
             return bytes[:max_cnt]
 
         def setup_judge_error_attributes ():
