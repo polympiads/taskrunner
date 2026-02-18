@@ -98,6 +98,8 @@ async def _prepare_polygon_problem (
             problem = await sync_to_async(read_polygon_problem)( os.path.join(unzippedFolder, "problem.xml") )
 
             metadata: ProblemMetadata = { "tests": [] }
+            metadata["time_limit"] = problem.timelimit
+            metadata["memory_limit"] = problem.memlimit
 
             await asyncio.gather(
                 sync_to_async(run_problems_copy)(unzippedFolder, resultFolder, problem, metadata),                 

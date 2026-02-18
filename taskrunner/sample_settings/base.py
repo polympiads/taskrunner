@@ -178,4 +178,6 @@ CELERY_BROKER  = "pyamqp://guest@broker.polympiads.ch//"
 MAX_LEN_ERROR_MESSAGE = 1024
 MAX_TESTS_PER_BATCH = 8
 
+WALL_TIME_ADDITIONAL = 0.1
+
 USE_CGROUPS = False

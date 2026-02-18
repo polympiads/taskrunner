@@ -3,8 +3,10 @@ from typing import Dict, List, Tuple
 import xml.etree.ElementTree as ET
 
 class PolygonProblem:
-    tests   : List[Tuple[str, str]]
-    checker : str
+    tests     : List[Tuple[str, str]]
+    timelimit : float
+    memlimit  : int
+    checker   : str
 
     def __init__ (self):
         self.tests   = []
@@ -21,6 +23,8 @@ def read_polygon_problem (path: str):
     input_pattern  = None
     answer_pattern = None
     checker_path   = None
+    
+    problem = PolygonProblem()
     def explore (x: "ET.Element[str]"):
         nonlocal number_tests, input_pattern, answer_pattern, checker_path
         if x.tag != "checker" and x.tag != "validators" \
@@ -35,10 +39,14 @@ def read_polygon_problem (path: str):
             for y in x:
                 if y.tag == "source":
                     checker_path = y.attrib["path"]
+        if x.tag == "time-limit":
+            # the timelimit is in milliseconds, so convert to seconds
+            problem.timelimit = int(x.text) / 1000
+        if x.tag == "memory-limit":
+            problem.memlimit = int(x.text)
 
     explore(root)
     
-    problem = PolygonProblem()
     for test_id in range(1, number_tests + 1):
         problem.tests.append((
             input_pattern % test_id,

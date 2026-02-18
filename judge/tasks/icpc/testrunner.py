@@ -30,7 +30,10 @@ async def run_test (
         sb_check: Sandbox, cmd_check: List[str],
         
         submission: SubmissionInformation,
-        tests_already_done: List[TestCasesOutput]) -> bool:
+        tests_already_done: List[TestCasesOutput],
+        
+        time_limit: float,
+        memory_limit: int) -> bool:
     with start_as_current_span(f"Submission.run_test#{test}") as run_span:
         test_input  = problem.get_input_file(test)
         test_answer = problem.get_output_file(test)
@@ -39,7 +42,13 @@ async def run_test (
         os.chmod(test_answer, 0o644)
 
         await sb_eval.prepare_for_stdin( test_input, "in.txt" )
-        eval_results = await sb_eval.run_sandbox( cmd_eval, stdin="in.txt", stdout="out.txt" )
+        eval_results = await sb_eval.run_sandbox(
+            cmd_eval,
+            stdin="in.txt",
+            stdout="out.txt",
+            time=time_limit,
+            memory=memory_limit,
+            wall_time=time_limit + settings.WALL_TIME_ADDITIONAL )
         test_stdout  = sb_eval.path_relative_to_cwd("out.txt")
         run_span.add_event("Evaluation finished")
         run_span.set_attribute("eval:sandbox:stdout", eval_results.sandbox_stdout)
@@ -194,7 +203,10 @@ async def _run_tests_task (
                     sb_eval, cmd_eval,
                     sb_check, cmd_check,
                     submission,
-                    tests_already_done
+                    tests_already_done,
+
+                    time_limit   = problem.get_time_limit(),
+                    memory_limit = problem.get_memory_limit()
                 )
         
         root_span.set_attribute("problem:all-tests", list(map(str, tests_already_done)))

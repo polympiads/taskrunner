@@ -23,6 +23,9 @@ PROCESS_PACKAGES = [
     "a-plus-b"
 ]
 
+def get_test_package_location (path: str):
+    return os.path.abspath( os.path.join( os.path.dirname(__file__), "assets", path ) )
+
 def setup_polygon_packages (storage: BaseStorageClient):
     for (location, path) in TEST_POLYGON_PACKAGES:
         abs_path = os.path.join( os.path.dirname(__file__), "assets", path )
