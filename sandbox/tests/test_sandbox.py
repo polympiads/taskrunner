@@ -4,6 +4,7 @@ import unittest
 
 from unittest.mock import AsyncMock, MagicMock, patch
 from django.conf import settings
+from django.test import override_settings
 from sandbox import Sandbox, IsolateError
 from sandbox.context import sandbox_open
 from sandbox.error import SandboxDoubleFree, SandboxUseAfterFree
@@ -37,11 +38,16 @@ class TestSandbox(unittest.IsolatedAsyncioTestCase):
         self.current_span = self.trace.get_current_span.return_value = MagicMock()
 
         self.set_status = self.current_span.set_status = MagicMock()
+
+        self.override_cgroup = override_settings(USE_CGROUPS=False)
+        self.override_cgroup.__enter__()
     def tearDown(self):
         self.patcher.stop()
         self.patcher_logger.stop()
         self.patcher_swcs.stop()
         self.patcher_trace.stop()
+
+        self.override_cgroup.__exit__(None, None, None)
 
     @patch('sandbox.sandbox.run_subprocess_command')
     async def test_create_sandbox_success(self, mock_run_cmd):

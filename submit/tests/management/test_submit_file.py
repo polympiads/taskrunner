@@ -39,7 +39,7 @@ int main () {
 APLUSB_PROG_CPP_SMALL_MLE = """
 #include <iostream>
 
-const int MAXN = 1024 * 16;
+const int MAXN = 1024 * 1024;
 int dp[MAXN];
 int main () {
     int a, b;
