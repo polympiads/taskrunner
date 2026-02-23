@@ -49,7 +49,9 @@ INSTALLED_APPS = [
     'storecli',
     'submit',
     'problems',
-    'storage'
+    'storage',
+    'rules',
+    'ccs'
 ]
 
 MIDDLEWARE = [
@@ -113,6 +115,11 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+AUTHENTICATION_BACKENDS = (
+    'rules.permissions.ObjectPermissionBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 
 # Internationalization

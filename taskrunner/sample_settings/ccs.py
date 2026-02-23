@@ -10,7 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from storecli.cache import CacheClient
+from storecli.network import NetworkClient
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +29,10 @@ SECRET_KEY = 'django-insecure-z2f9#&lmzp_u*@v9liig1(cmnuw2heshzz2n1vj)yeszi)t^*n
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "storage.polympiads.ch",
+    '*'
+]
 
 
 # Application definition
@@ -50,15 +57,13 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'ccs.auth.middleware.HeaderSessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-ROOT_URLCONF = 'taskrunner.urls'
 
 TEMPLATES = [
     {
@@ -84,15 +89,15 @@ WSGI_APPLICATION = 'taskrunner.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('POSTGRES_DB', 'postgres'),
+        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'postgresql'), # Use the service name from compose
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
     }
 }
 
-AUTHENTICATION_BACKENDS = (
-    'rules.permissions.ObjectPermissionBackend',
-    'django.contrib.auth.backends.ModelBackend',
-)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -111,6 +116,11 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+AUTHENTICATION_BACKENDS = (
+    'rules.permissions.ObjectPermissionBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 
 # Internationalization
@@ -142,7 +152,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 from storecli.base import BaseStorageClient
 from opentelemetry.instrumentation.celery import CeleryInstrumentor
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from celery import Celery
+
+CeleryInstrumentor().instrument()
+RequestsInstrumentor().instrument()
 
 MAX_NB_SANDBOX = 5
 
@@ -158,14 +172,16 @@ CXX_COMPILER = "/usr/bin/g++"
 JAVA_COMPILER = "/usr/bin/javac"
 JAR_COMPILER = "/usr/bin/jar"
 JAVA_EXECUTABLE = "/usr/bin/java"
-JVM_DIRECTORIES = [ "/etc/alternatives", "/usr/lib/jvm", "/etc/java-21-openjdk/" ]
 
-STORAGE_CLIENT  = BaseStorageClient()
-PROBLEM_STORAGE_LOCATION = "/app/problems"
+PROBLEM_STORAGE_LOCATION = "/problems"
 STORAGE_SERVER_LOCATION  = "/app/storage/server"
+STORAGE_CLIENT_LOCATION  = "/app/storage/client"
+STORAGE_CLIENT  = CacheClient( NetworkClient( "http://storage.polympiads.ch:8000", STORAGE_CLIENT_LOCATION ) )
 
-CELERY_BACKEND = "redis://localhost:6379/0"
-CELERY_BROKER  = "pyamqp://guest@localhost//"
+ROOT_URLCONF = 'ccs.urls'
+
+CELERY_BACKEND = "redis://backend.polympiads.ch:6379/0"
+CELERY_BROKER  = "pyamqp://guest@broker.polympiads.ch//"
 
 MAX_LEN_ERROR_MESSAGE = 1024
 MAX_TESTS_PER_BATCH = 8

@@ -119,7 +119,7 @@ services:
     image: polympiads/taskrunner
     command: python3 manage.py runserver 0.0.0.0:8000
     environment:
-      DJANGO_SETTINGS_MODULE: taskrunner.sample_settings.base
+      DJANGO_SETTINGS_MODULE: taskrunner.sample_settings.ccs
       POSTGRES_DB: polympiads
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -142,6 +142,8 @@ services:
         condition: service_started
       migrate:
         condition: service_completed_successfully
+    ports:
+      - "8000:8000"
 
 networks:
   net0:

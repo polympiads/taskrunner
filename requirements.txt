@@ -20,5 +20,8 @@ uuid6
 requests
 psycopg[binary]
 
+rules
+hypothesis
+
 tree-sitter
 tree-sitter-java
