@@ -14,6 +14,7 @@ opentelemetry-instrumentation-celery
 opentelemetry-instrumentation-requests
 
 django
+channels[daphne]
 opentelemetry-instrumentation-django
 django-enumfield
 uuid6

@@ -179,7 +179,10 @@ STORAGE_CLIENT  = CacheClient( NetworkClient( "http://storage.polympiads.ch:8000
 
 ROOT_URLCONF = 'storage.urls'
 
-CELERY_BACKEND = "redis://backend.polympiads.ch:6379/0"
+REDIS_HOST = os.environ.get("REDIS_HOST", "redis://backend.polympiads.ch:6379")
+RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "pyamqp://guest@broker.polympiads.ch//")
+
+CELERY_BACKEND = REDIS_HOST + "/0"
 CELERY_BROKER  = "pyamqp://guest@broker.polympiads.ch//"
 
 MAX_LEN_ERROR_MESSAGE = 1024
