@@ -1,9 +1,12 @@
 
 import os
+from typing import TYPE_CHECKING
 import tree_sitter_java as tsjava
 from tree_sitter import Language, Node, Parser, Query, QueryCursor
 
 from django.conf import settings
+if TYPE_CHECKING:
+    from ccs.views.languages import LanguagesCCSJson
 
 from judge.languages.base import CompiledLanguage
 from sandbox.isolate import Isolate
@@ -69,3 +72,10 @@ class JavaLanguage (CompiledLanguage):
     def extra_compilation_directories(self):
         return settings.JVM_DIRECTORIES
     
+    @property
+    def ccs_language_information (self) -> "LanguagesCCSJson":
+        return {
+            "id": "java",
+            "name": "Java",
+            "extensions": []
+        }

@@ -25,7 +25,10 @@ from ccs.models.visible import Visibility, visibility_to_string
 import enum as py_enum
 
 class EventFeedKind (py_enum.Enum):
-    CONTEST = "contests"
+    CONTEST         = "contests"
+    STATE           = "state"
+    LANGUAGES       = "languages"
+    JUDGEMENT_TYPES = "judgement-types"
 
 class EventFeedMessage (TypedDict):
     type       : "Literal['event.feed']"

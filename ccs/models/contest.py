@@ -1,9 +1,13 @@
 
+import asyncio
 import datetime
 from typing import TypedDict
 
+from asgiref.sync import async_to_sync
+from django.db import transaction
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 from django_enumfield import enum
 import rules
 from rules.predicates import is_staff, is_superuser
@@ -24,10 +28,62 @@ class ContestCCSJson (TypedDict):
     scoreboard_type        : str
 
     penalty_time : str
+class ContestStateCCSJson (TypedDict):
+    started        : "str | None"
+    ended          : "str | None"
+    frozen         : "str | None"
+    thawed         : "str | None"
+    finalized      : "str | None"
+    end_of_updates : "str | None"
 
 MAX_CONTEST_NAME_LENGTH = 64
 
+class ContestManager (models.Manager):
+    @staticmethod
+    async def acreate_contest (**updates):
+        from ccs.models.eventfeed import EventFeed, EventFeedKind
+
+        contest = await Contest.objects.acreate(**updates)
+
+        await EventFeed.objects.acreate_event(
+            contest,
+            "contest",
+            EventFeedKind.CONTEST,
+            contest.get_display_json()
+        )
+
+        return contest
+
+    @staticmethod
+    def start_contest (contest_id: int):
+        from ccs.models.eventfeed import EventFeed, EventFeedKind
+        from ccs.views.languages import LanguagesCCSJson
+        from ccs.views.judgetype import JudgementTypesCCSJson
+
+        with transaction.atomic():
+            contest = Contest.objects.select_for_update().get(pk = contest_id)
+            if contest.started is not None:
+                raise ValueError("Can't start contest that has started.")
+            
+            contest.started = timezone.now()
+            contest.save()
+        
+            async def send_events ():
+                await EventFeed.objects.acreate_event(
+                    contest,
+                    "contest-start",
+                    EventFeedKind.STATE,
+                    contest.get_json_state()
+                )
+
+                await LanguagesCCSJson.acreate_languages_events(contest)
+                await JudgementTypesCCSJson.acreate_judgement_types(contest)
+            
+            async_to_sync(send_events)()
+
 class Contest (models.Model):
+    objects : "models.Manager[Contest] | ContestManager" = ContestManager()
+
     visibility = enum.EnumField(Visibility)
 
     name        = models.CharField(max_length=MAX_CONTEST_NAME_LENGTH)
@@ -45,6 +101,14 @@ class Contest (models.Model):
 
     penalty_time = models.DurationField()
 
+    # Contest State
+    started        = models.DateTimeField(default = None, null = True)
+    frozen         = models.DateTimeField(default = None, null = True)
+    ended          = models.DateTimeField(default = None, null = True)
+    thawed         = models.DateTimeField(default = None, null = True)
+    finalized      = models.DateTimeField(default = None, null = True)
+    end_of_updates = models.DateTimeField(default = None, null = True)
+    
     @property
     def eventfeed_group (self):
         return "contest_eventfeed__" + str(self.pk)
@@ -72,6 +136,22 @@ class Contest (models.Model):
     def get_scoreboard_type (self) -> str:
         return "pass-fail" # the judge currently does not support "score" scoreboard type
 
+    def get_json_state (self) -> ContestStateCCSJson:
+        result: ContestStateCCSJson = {}
+        def put_field (field: str, content: "datetime.datetime | None"):
+            if content is None:
+                result[field] = None
+            else:
+                result[field] = Time.string_from_time(content)
+        
+        put_field("started",        self.started)
+        put_field("frozen",         self.frozen)
+        put_field("ended",          self.ended)
+        put_field("thawed",         self.thawed)
+        put_field("finalized",      self.finalized)
+        put_field("end_of_updates", self.end_of_updates)
+
+        return result
     def get_display_json (self) -> ContestCCSJson:
         result: ContestCCSJson = {}
         def put_into (label: str, value, id = lambda x : x):

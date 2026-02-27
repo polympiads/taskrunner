@@ -1,10 +1,12 @@
 
 import os
 import shutil
-from typing import Callable, List, Tuple
+from typing import TYPE_CHECKING, Callable, List, Tuple
 
 import aiofiles
 
+if TYPE_CHECKING:
+    from ccs.views.languages import LanguagesCCSJson
 from judge.error import JudgeError
 from sandbox.context import sandbox_open
 from sandbox.isolate import Isolate
@@ -15,6 +17,10 @@ from judge.telemetry import start_as_current_span, judge_logger
 
 class Language:
     def language_name (self):
+        raise NotImplementedError()
+
+    @property
+    def ccs_language_information (self) -> "LanguagesCCSJson":
         raise NotImplementedError()
 
     def should_compile (self):

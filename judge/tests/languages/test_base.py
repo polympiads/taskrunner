@@ -19,6 +19,8 @@ class TestLanguage(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(NotImplementedError):
             lang.get_execution_command("file")
         with self.assertRaises(NotImplementedError):
+            x = lang.ccs_language_information
+        with self.assertRaises(NotImplementedError):
             await lang.compile("file", "storage")
         self.assertFalse(lang.should_compile())
 

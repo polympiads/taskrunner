@@ -46,10 +46,10 @@ class EventFeedConsumer (AsyncHttpConsumer):
         
         self.subscription_channel = await self.channel_layer.new_channel()
         await self.channel_layer.group_add(contest.eventfeed_group, self.subscription_channel)
-        
+
         try:
             self.upto_id = upto_id = await EventFeed.objects.afind_latest()
-            
+
             await self.send_headers(status = 200, headers = [ (b"Content-Type", b"application/x-ndjson") ])
             
             async for event in EventFeed.objects.get_feed_queryset(contest, self.user, upto_id, since=since_token):

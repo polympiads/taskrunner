@@ -21,6 +21,7 @@ opentelemetry-instrumentation-django
 django-enumfield
 uuid6
 httpx
+freezegun
 requests
 psycopg[binary]
 

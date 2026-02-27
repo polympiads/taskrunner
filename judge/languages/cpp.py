@@ -3,12 +3,14 @@ import os
 import tempfile
 import shutil
 
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import aiofiles
 import aiofiles.os
 
 from django.conf import settings
+if TYPE_CHECKING:
+    from ccs.views.languages import LanguagesCCSJson
 from judge.languages.base import CompiledLanguage
 from judge.error import JudgeError
 from sandbox.context import sandbox_open
@@ -30,6 +32,14 @@ class CppLanguage (CompiledLanguage):
         
     def get_execution_command (self, filename: str):
         return [filename]
+    
+    @property
+    def ccs_language_information (self) -> "LanguagesCCSJson":
+        return {
+            "id": "cpp",
+            "name": "GNU C++",
+            "extensions": [],
+        }
 
 GNU_GPP_23 = CppLanguage(
     "23", settings.CXX_COMPILER, [
