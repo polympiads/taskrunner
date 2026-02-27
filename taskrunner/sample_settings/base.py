@@ -185,7 +185,7 @@ REDIS_HOST = os.environ.get("REDIS_HOST", "redis://backend.polympiads.ch:6379")
 RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "pyamqp://guest@broker.polympiads.ch//")
 
 CELERY_BACKEND = REDIS_HOST + "/0"
-CELERY_BROKER  = "pyamqp://guest@broker.polympiads.ch//"
+CELERY_BROKER  = RABBITMQ_HOST
 
 MAX_LEN_ERROR_MESSAGE = 1024
 MAX_TESTS_PER_BATCH = 8
