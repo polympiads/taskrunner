@@ -174,17 +174,17 @@ JAVA_COMPILER = "/usr/bin/javac"
 JAR_COMPILER = "/usr/bin/jar"
 JAVA_EXECUTABLE = "/usr/bin/java"
 
-PROBLEM_STORAGE_LOCATION = "/problems"
+PROBLEM_STORAGE_LOCATION = "/app/problems"
 STORAGE_SERVER_LOCATION  = "/app/storage/server"
 STORAGE_CLIENT_LOCATION  = "/app/storage/client"
 STORAGE_CLIENT  = CacheClient( NetworkClient( "http://storage.polympiads.ch:8000", STORAGE_CLIENT_LOCATION ) )
 
 ROOT_URLCONF = 'storage.urls'
 
-REDIS_HOST = os.environ.get("REDIS_HOST", "redis://backend.polympiads.ch:6379")
+REDIS_HOST = os.environ.get("REDIS_HOST", "redis://backend.polympiads.ch:6379/")
 RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "pyamqp://guest@broker.polympiads.ch//")
 
-CELERY_BACKEND = REDIS_HOST + "/0"
+CELERY_BACKEND = REDIS_HOST + "0"
 CELERY_BROKER  = RABBITMQ_HOST
 
 MAX_LEN_ERROR_MESSAGE = 1024
