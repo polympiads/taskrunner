@@ -31,6 +31,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -173,3 +175,13 @@ MAX_TESTS_PER_BATCH = 8
 WALL_TIME_ADDITIONAL = 0.1
 
 USE_CGROUPS = False
+
+ASGI_APPLICATION = "taskrunner.asgi.application"
+
+EVENTFEED_HEARTBEET_TIME = 30
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}

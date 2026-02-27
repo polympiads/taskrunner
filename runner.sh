@@ -1,4 +1,6 @@
 
+export DJANGO_SETTINGS_MODULE="taskrunner.sample_settings.test"
+
 python3 manage.py makemigrations
 python3 manage.py migrate
 

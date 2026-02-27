@@ -15,9 +15,12 @@ opentelemetry-instrumentation-requests
 
 django
 channels[daphne]
+channels-redis
+opentelemetry-instrumentation-asgi
 opentelemetry-instrumentation-django
 django-enumfield
 uuid6
+httpx
 requests
 psycopg[binary]
 

@@ -45,6 +45,10 @@ class Contest (models.Model):
 
     penalty_time = models.DurationField()
 
+    @property
+    def eventfeed_group (self):
+        return "contest_eventfeed__" + str(self.pk)
+
     def get_name (self) -> str:
         return self.name
     def get_formal_name (self) -> str:

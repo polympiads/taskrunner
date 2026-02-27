@@ -8,6 +8,13 @@ class Visibility (enum.Enum):
     PUBLIC  = 0
     PRIVATE = 1
 
+def visibility_to_string (visibility: Visibility):
+    match visibility:
+        case Visibility.PUBLIC:  return "public"
+        case Visibility.PRIVATE: return "private"
+    
+    raise NotImplementedError(f"Could not recognize visibility: {visibility}")
+
 def parse_visibility (x: "str | None"):
     if x is None:
         return None, "Field '{field}' should exist"
