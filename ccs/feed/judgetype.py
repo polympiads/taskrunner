@@ -1,11 +1,11 @@
 
 import enum
-from typing import TYPE_CHECKING, TypedDict
+from typing import TypedDict
 
-from ccs.models.eventfeed import EventFeed, EventFeedKind
+from ccs.models.contest import Contest
+from ccs.models.managers.eventfeed import EventFeedKind, EventFeedManager
+from submit.models.verdict import SubmissionVerdict
 
-if TYPE_CHECKING:
-    from ccs.models.contest import Contest
 
 class JudgementType (enum.Enum):
     RE  = "RE"
@@ -15,6 +15,19 @@ class JudgementType (enum.Enum):
     CE  = "CE"
     AC  = "AC"
     JE  = "JE"
+
+    @staticmethod
+    def from_verdict (verdict: SubmissionVerdict) -> "JudgementType":
+        match verdict:
+            case SubmissionVerdict.ACCEPTED: return JudgementType.AC
+            case SubmissionVerdict.COMPILER_ERROR: return JudgementType.CE
+            case SubmissionVerdict.JUDGE_ERROR: return JudgementType.JE
+            case SubmissionVerdict.WRONG_ANSWER: return JudgementType.WA
+            case SubmissionVerdict.RUNTIME_ERROR: return JudgementType.RE
+            case SubmissionVerdict.MEM_LIMIT: return JudgementType.MLE
+            case SubmissionVerdict.TIME_LIMIT: return JudgementType.TLE
+            
+        raise NotImplementedError(f"There is no judgement type for verdict {verdict}")
 
 class JudgementTypesCCSJson(TypedDict):
     id   : str
@@ -27,7 +40,7 @@ class JudgementTypesCCSJson(TypedDict):
     async def acreate_judgement_types (contest: "Contest"):
         async def send_judgement (judgement: JudgementType, data: "JudgementTypesCCSJson"):
             data["id"] = judgement.value
-            await EventFeed.objects.acreate_event(
+            await EventFeedManager.acreate_event(
                 contest,
                 judgement.value,
                 EventFeedKind.JUDGEMENT_TYPES,

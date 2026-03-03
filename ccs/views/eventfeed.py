@@ -11,9 +11,11 @@ from django.contrib.auth.models import User
 from rules.predicates import is_staff
 
 from ccs.models.contest import Contest
-from ccs.models.eventfeed import EventFeed, EventFeedMessage
+from ccs.models.eventfeed import EventFeed
 
 from asgiref.sync import sync_to_async
+
+from ccs.models.managers.eventfeed import EventFeedManager, EventFeedMessage
 
 class EventFeedConsumer (AsyncHttpConsumer):
     user: User
@@ -48,11 +50,11 @@ class EventFeedConsumer (AsyncHttpConsumer):
         await self.channel_layer.group_add(contest.eventfeed_group, self.subscription_channel)
 
         try:
-            self.upto_id = upto_id = await EventFeed.objects.afind_latest()
+            self.upto_id = upto_id = await EventFeedManager.afind_latest()
 
             await self.send_headers(status = 200, headers = [ (b"Content-Type", b"application/x-ndjson") ])
             
-            async for event in EventFeed.objects.get_feed_queryset(contest, self.user, upto_id, since=since_token):
+            async for event in EventFeedManager.get_feed_queryset(contest, self.user, upto_id, since=since_token):
                 await self.send_body(event.full_payload, more_body=True)
 
             while True:

@@ -16,7 +16,8 @@ import requests
 
 from ccs.auth.middleware import SessionHeaderAuthenticationStack
 from ccs.models.contest import Contest
-from ccs.models.eventfeed import EventFeed, EventFeedKind
+from ccs.models.eventfeed import EventFeed
+from ccs.models.managers.eventfeed import EventFeedManager, EventFeedKind
 from ccs.models.visible import Visibility
 from ccs.views.eventfeed import EventFeedConsumer
 from django.contrib.auth.models import AnonymousUser, User
@@ -206,7 +207,7 @@ class TestEventFeedConsumerContent (TransactionTestCase):
         for viskind, visname in [(Visibility.PUBLIC, "public"), (Visibility.PRIVATE, "private")]:
             for username, user in [("null", None), ("user", self.user), ("sudo", self.sudo)]:
                 idx += 1
-                eventfeed = await EventFeed.objects.acreate_event(
+                eventfeed = await EventFeedManager.acreate_event(
                     self.contest,
                     str(idx),
                     EventFeedKind.CONTEST,
@@ -339,13 +340,13 @@ class TestEventFeedConsumerContent (TransactionTestCase):
             self.contest.pk
         )
 
-        afind_latest = EventFeed.objects.afind_latest
+        afind_latest = EventFeedManager.afind_latest
         async def custom_afind_latest ():
             await asyncio.sleep(0.5)
             result = await afind_latest()
             return result
 
-        with patch ("ccs.models.eventfeed.EventFeedManager.afind_latest", side_effect=custom_afind_latest):
+        with patch ("ccs.models.managers.eventfeed.EventFeedManager.afind_latest", side_effect=custom_afind_latest):
             with self.assertRaises(asyncio.TimeoutError):
                 async def local_run ():
                     await asyncio.wait_for( asyncio.gather(
@@ -398,7 +399,7 @@ class TestEventFeedConsumerContent (TransactionTestCase):
         with self.assertRaises(asyncio.TimeoutError):
             async def try_private_reset ():
                 await asyncio.sleep(0.5)
-                await EventFeed.objects.acreate_event( self.contest, "3", EventFeedKind.CONTEST, {}, Visibility.PRIVATE, None )
+                await EventFeedManager.acreate_event( self.contest, "3", EventFeedKind.CONTEST, {}, Visibility.PRIVATE, None )
             async def local_run ():
                 await asyncio.wait_for( 
                     asyncio.gather(
@@ -421,7 +422,7 @@ class TestEventFeedConsumerContent (TransactionTestCase):
         with self.assertRaises(asyncio.TimeoutError):
             async def try_private_reset ():
                 await asyncio.sleep(0.5)
-                await EventFeed.objects.acreate_event( self.contest, "3", EventFeedKind.CONTEST, {}, Visibility.PUBLIC, None )
+                await EventFeedManager.acreate_event( self.contest, "3", EventFeedKind.CONTEST, {}, Visibility.PUBLIC, None )
             async def local_run ():
                 await asyncio.wait_for( 
                     asyncio.gather(

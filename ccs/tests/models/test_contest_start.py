@@ -8,6 +8,7 @@ from django.test import TransactionTestCase
 
 from ccs.models.contest import Contest
 from ccs.models.eventfeed import EventFeed
+from ccs.models.managers.contest import ContestManager
 from ccs.models.visible import Visibility
 from ccs.tests.views.test_eventfeed import FakeEventFeedConsumer, override_layer
 from django.contrib.auth.models import AnonymousUser
@@ -18,7 +19,7 @@ class TestContestStart (TransactionTestCase):
         self._layer = override_layer()
         self._layer.enable()
 
-        self.contest = asyncio.run( Contest.objects.acreate_contest(
+        self.contest = asyncio.run( ContestManager.acreate_contest(
             name         = "pubct",
             duration     = timedelta(hours=5),
             penalty_time = timedelta(minutes = 20),
@@ -54,10 +55,10 @@ class TestContestStart (TransactionTestCase):
         )
     def test_start_contest (self):
         with freeze_time( "2025-04-14 13:30:00" ):
-            Contest.objects.start_contest(self.contest.pk)
+            ContestManager.start_contest(self.contest.pk)
         
             with self.assertRaises(ValueError):
-                Contest.objects.start_contest(self.contest.pk)
+                ContestManager.start_contest(self.contest.pk)
 
         self.consumer = FakeEventFeedConsumer(
             InMemoryChannelLayer(),

@@ -10,7 +10,7 @@ import aiofiles
 
 from taskrunner.celery import judge_app
 from problems.telemetry import start_as_current_span
-from asgiref.sync import sync_to_async
+from asgiref.sync import sync_to_async, async_to_sync
 from django.conf import settings
 
 from judge.languages.cpp import GNU_GPP_23
@@ -60,7 +60,7 @@ def prepare_polygon_problem (
         target_loc      : str
     ):
     try:
-        return asyncio.run( _prepare_polygon_problem(problem_id, preparation_id, polygon_pkg_loc, target_loc) )
+        return async_to_sync(_prepare_polygon_problem)(problem_id, preparation_id, polygon_pkg_loc, target_loc)
     except Exception as exc:
         Preparation.objects.set_preparation_status(preparation_id, PreparationStatus.FAILURE)
 
@@ -82,7 +82,7 @@ async def _prepare_polygon_problem (
             preparation_id, PreparationStatus.RUNNING )
         pkg_path = await settings.STORAGE_CLIENT.download(polygon_pkg_loc)
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(prefix = settings.TEMPDIR_STORAGE_LOCATION) as tmpdir:
             unzippedFolder = os.path.join(tmpdir, "polygon")
             resultFolder = os.path.join(tmpdir, "problem")
             resultFile = os.path.join(tmpdir, "result.zip")

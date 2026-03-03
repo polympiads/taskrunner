@@ -13,7 +13,7 @@ import os
 import tempfile
 from typing import TypedDict
 
-from asgiref.sync import sync_to_async
+from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
 from submit.models.status import SubmissionStatus
 from submit.models.submission import Submission
@@ -104,7 +104,7 @@ class CompilationInput:
         
 @judge_app.task
 def compile_task (params: s_CompilationInput):
-    return asyncio.run( _compile_task(CompilationInput.deserialize(params)) ).serialize()
+    return async_to_sync(_compile_task)(CompilationInput.deserialize(params)).serialize()
 
 async def _compile_task (params: CompilationInput) -> CompilationResult:
     try:
@@ -122,7 +122,7 @@ async def _compile_task (params: CompilationInput) -> CompilationResult:
             with start_as_current_span("download.code"):
                 target_file = await settings.STORAGE_CLIENT.download(params.input_storage)
 
-            with tempfile.TemporaryDirectory() as tmpdirname:
+            with tempfile.TemporaryDirectory(prefix = settings.TEMPDIR_STORAGE_LOCATION) as tmpdirname:
                 temporary_storage = os.path.join(tmpdirname, "storage")
 
                 language = get_language( params.language_kind )

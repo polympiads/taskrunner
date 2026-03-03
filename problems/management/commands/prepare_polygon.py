@@ -8,6 +8,8 @@ from problems.models.preparation import Preparation
 from problems.models.problem import Problem
 from problems.telemetry import start_as_current_span
 
+from asgiref.sync import async_to_sync
+
 class Command (BaseCommand):
     help = "Upload a polygon package for a given problem"
 
@@ -31,7 +33,7 @@ class Command (BaseCommand):
             return location
 
         with start_as_current_span("Prepare.polygon"):
-            pkg_location = asyncio.run(run_upload())
+            pkg_location = async_to_sync(run_upload)()
 
             Preparation.objects.create_polygon_preparation(
                 problem,

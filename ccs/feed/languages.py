@@ -1,10 +1,10 @@
 
-from typing import TYPE_CHECKING, List, TypedDict, NotRequired
+from typing import List, TypedDict
 
-if TYPE_CHECKING:
-    from ccs.models.contest import Contest
-from ccs.models.eventfeed import EventFeed, EventFeedKind
+from ccs.models.contest import Contest
+from ccs.models.managers.eventfeed import EventFeedKind, EventFeedManager
 from judge.languages import LanguageKind, get_language
+
 
 class LanguagesCCSJson (TypedDict):
     id   : str
@@ -17,7 +17,7 @@ class LanguagesCCSJson (TypedDict):
         for uuid, lang in LanguageKind.choices():
             ccs_info = get_language(lang).ccs_language_information
             
-            await EventFeed.objects.acreate_event(
+            await EventFeedManager.acreate_event(
                 contest,
                 ccs_info['id'],
                 EventFeedKind.LANGUAGES,

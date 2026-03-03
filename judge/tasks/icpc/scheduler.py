@@ -28,7 +28,7 @@ from taskrunner.celery import judge_app
 from judge.tasks.icpc.compile import CompilationResult, s_CompilationResult
 from storecli.problems.storage import ProblemStorage
 from judge.telemetry import start_as_current_span, judge_logger
-from asgiref.sync import sync_to_async
+from asgiref.sync import async_to_sync, sync_to_async
 
 @judge_app.task
 def scheduler_task (
@@ -53,7 +53,7 @@ def _scheduler_task (
             return
         
         try:
-            problem = asyncio.run( ProblemStorage.download( submission_info.problem_location ) )
+            problem = async_to_sync(ProblemStorage.download)( submission_info.problem_location )
             
             test_count = problem.get_number_tests()
             span.set_attribute("problem:test-count", test_count)

@@ -153,7 +153,9 @@ DEFAULT_WALL_TIME  = 1.0
 DEFAULT_EXTRA_TIME = 0.1
 DEFAULT_MEMORY_KB  = 256 * 1024 # 256 MB
 
-SANDBOX_RESULT_FOLDER = "/app/results"
+BASE_STORAGE_DIR = "/var/lib/taskrunner"
+
+SANDBOX_RESULT_FOLDER = BASE_STORAGE_DIR + "/results"
 
 PYTHON_EXECUTABLE = "/usr/bin/python3"
 CXX_COMPILER = "/usr/bin/g++"
@@ -163,8 +165,9 @@ JAVA_EXECUTABLE = "/usr/bin/java"
 JVM_DIRECTORIES = [ "/etc/alternatives", "/usr/lib/jvm", "/etc/java-21-openjdk/" ]
 
 STORAGE_CLIENT  = BaseStorageClient()
-PROBLEM_STORAGE_LOCATION = "/app/problems"
-STORAGE_SERVER_LOCATION  = "/app/storage/server"
+TEMPDIR_STORAGE_LOCATION = BASE_STORAGE_DIR + "/tmp"
+PROBLEM_STORAGE_LOCATION = BASE_STORAGE_DIR + "/problems"
+STORAGE_SERVER_LOCATION  = BASE_STORAGE_DIR + "/storage/server"
 
 CELERY_BACKEND = "redis://localhost:6379/0"
 CELERY_BROKER  = "pyamqp://guest@localhost//"

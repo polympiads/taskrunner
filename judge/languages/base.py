@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Callable, List, Tuple
 import aiofiles
 
 if TYPE_CHECKING:
-    from ccs.views.languages import LanguagesCCSJson
+    from ccs.feed.languages import LanguagesCCSJson
 from judge.error import JudgeError
 from sandbox.context import sandbox_open
 from sandbox.isolate import Isolate

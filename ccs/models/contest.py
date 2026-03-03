@@ -1,7 +1,6 @@
 
-import asyncio
 import datetime
-from typing import TypedDict
+from typing import TYPE_CHECKING
 
 from asgiref.sync import async_to_sync
 from django.db import transaction
@@ -12,78 +11,14 @@ from django_enumfield import enum
 import rules
 from rules.predicates import is_staff, is_superuser
 
+if TYPE_CHECKING:
+    from ccs.feed.contest import ContestCCSJson, ContestStateCCSJson
 from ccs.models.visible import Visibility, is_public
 from ccs.utils.time import Reltime, Time
 
-class ContestCCSJson (TypedDict):
-    id          : str # string for the given int pk
-    name        : str
-    formal_name : str
-    
-    start_time             : str
-    countdown_pause_time   : str
-    duration               : str
-    scoreboard_freeze_time : str
-    scoreboard_thaw_time   : str
-    scoreboard_type        : str
-
-    penalty_time : str
-class ContestStateCCSJson (TypedDict):
-    started        : "str | None"
-    ended          : "str | None"
-    frozen         : "str | None"
-    thawed         : "str | None"
-    finalized      : "str | None"
-    end_of_updates : "str | None"
-
 MAX_CONTEST_NAME_LENGTH = 64
 
-class ContestManager (models.Manager):
-    @staticmethod
-    async def acreate_contest (**updates):
-        from ccs.models.eventfeed import EventFeed, EventFeedKind
-
-        contest = await Contest.objects.acreate(**updates)
-
-        await EventFeed.objects.acreate_event(
-            contest,
-            "contest",
-            EventFeedKind.CONTEST,
-            contest.get_display_json()
-        )
-
-        return contest
-
-    @staticmethod
-    def start_contest (contest_id: int):
-        from ccs.models.eventfeed import EventFeed, EventFeedKind
-        from ccs.views.languages import LanguagesCCSJson
-        from ccs.views.judgetype import JudgementTypesCCSJson
-
-        with transaction.atomic():
-            contest = Contest.objects.select_for_update().get(pk = contest_id)
-            if contest.started is not None:
-                raise ValueError("Can't start contest that has started.")
-            
-            contest.started = timezone.now()
-            contest.save()
-        
-            async def send_events ():
-                await EventFeed.objects.acreate_event(
-                    contest,
-                    "contest-start",
-                    EventFeedKind.STATE,
-                    contest.get_json_state()
-                )
-
-                await LanguagesCCSJson.acreate_languages_events(contest)
-                await JudgementTypesCCSJson.acreate_judgement_types(contest)
-            
-            async_to_sync(send_events)()
-
 class Contest (models.Model):
-    objects : "models.Manager[Contest] | ContestManager" = ContestManager()
-
     visibility = enum.EnumField(Visibility)
 
     name        = models.CharField(max_length=MAX_CONTEST_NAME_LENGTH)
@@ -136,8 +71,8 @@ class Contest (models.Model):
     def get_scoreboard_type (self) -> str:
         return "pass-fail" # the judge currently does not support "score" scoreboard type
 
-    def get_json_state (self) -> ContestStateCCSJson:
-        result: ContestStateCCSJson = {}
+    def get_json_state (self) -> "ContestStateCCSJson":
+        result: "ContestStateCCSJson" = {}
         def put_field (field: str, content: "datetime.datetime | None"):
             if content is None:
                 result[field] = None
@@ -152,8 +87,8 @@ class Contest (models.Model):
         put_field("end_of_updates", self.end_of_updates)
 
         return result
-    def get_display_json (self) -> ContestCCSJson:
-        result: ContestCCSJson = {}
+    def get_display_json (self) -> "ContestCCSJson":
+        result: "ContestCCSJson" = {}
         def put_into (label: str, value, id = lambda x : x):
             if value is None:
                 return

@@ -1,16 +1,32 @@
 
+from typing import TYPE_CHECKING
+
 from celery import chain
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django_enumfield import enum
 
+from ccs.feed.judgement import create_judgement_event
+from ccs.feed.judgetype import JudgementType
+from ccs.feed.submission import create_contest_start_event, create_contest_state_event
+from ccs.models.managers.eventfeed import EventFeedManager, EventFeedKind
+from ccs.utils.time import Reltime, Time
+
+if TYPE_CHECKING:
+    from ccs.models.contest import Contest
+
+from asgiref.sync import async_to_sync
+from ccs.models.eventfeed import EventFeed
 from judge.languages import LanguageKind, get_language
 from problems.models.problem import Problem
-from submit.models.status import SubmissionStatus
+from submit.models.status import SubmissionStatus, submission_status_to_string
 from submit.models.verdict import SubmissionVerdict
 
+from django.utils import timezone
 from django.db import transaction
+
+class SubmitError (ValueError): pass
 
 class SubmissionManager (models.Manager):
     def create_submission (
@@ -20,8 +36,20 @@ class SubmissionManager (models.Manager):
 
         code_location : str,
 
-        language_kind : LanguageKind
+        language_kind : LanguageKind,
+
+        contest : "Contest | None" = None
     ):
+        if contest is not None:
+            if contest.started is None:
+                raise SubmitError("Cannot create submission for contest that hasn't started.")
+            
+            current_time = timezone.now()
+            delta_time   = current_time - contest.started
+
+            if delta_time > contest.duration:
+                raise SubmitError("Cannot create submission after the end of the contest.")
+
         with transaction.atomic():
             language = get_language(language_kind)
 
@@ -36,38 +64,31 @@ class SubmissionManager (models.Manager):
                 code_location = code_location,
                 exec_location = exec_location,
 
-                language = language_kind
+                language = language_kind,
+                contest = contest
             )
 
-            from judge.tasks.icpc.compile   import compile_task
-            from judge.tasks.icpc.scheduler import scheduler_task
+        if contest is not None:
+            create_contest_start_event(contest, submission.pk, language, problem.pk, user)
+            create_contest_state_event(contest, submission.pk, submission.status, user)
 
-            from judge.tasks.icpc.compile import CompilationInput, CompilationResult
-            from judge.tasks.icpc.subinfo import SubmissionInformation
+        from judge.tasks.icpc.compile   import compile_task
+        from judge.tasks.icpc.scheduler import scheduler_task
 
-            if language.should_compile():
-                signature = chain(
-                    compile_task.s( CompilationInput(
-                        submission.id,
-                        code_location,
-                        exec_location,
-                        language_kind,
-                        1.,
-                        1.
-                    ).serialize() ),
-                    scheduler_task.s(
-                        SubmissionInformation(
-                            submission.pk,
-                            problem.problem_location,
-                            exec_location,
-                            language_kind
-                        ).serialize()
-                    )
-                )
-                transaction.on_commit(lambda : signature.apply_async())
-            else:
-                scheduler_task.delay_on_commit(
-                    CompilationResult().serialize(),
+        from judge.tasks.icpc.compile import CompilationInput, CompilationResult
+        from judge.tasks.icpc.subinfo import SubmissionInformation
+
+        if language.should_compile():
+            signature = chain(
+                compile_task.s( CompilationInput(
+                    submission.id,
+                    code_location,
+                    exec_location,
+                    language_kind,
+                    1.,
+                    1.
+                ).serialize() ),
+                scheduler_task.s(
                     SubmissionInformation(
                         submission.pk,
                         problem.problem_location,
@@ -75,10 +96,28 @@ class SubmissionManager (models.Manager):
                         language_kind
                     ).serialize()
                 )
+            )
+            transaction.on_commit(lambda : signature.apply_async())
+        else:
+            scheduler_task.delay_on_commit(
+                CompilationResult().serialize(),
+                SubmissionInformation(
+                    submission.pk,
+                    problem.problem_location,
+                    exec_location,
+                    language_kind
+                ).serialize()
+            )
 
-            return submission
+        return submission
 
 class Submission (models.Model):
+    contest = models.ForeignKey(
+        "ccs.Contest",
+        on_delete=models.PROTECT,
+        null=True
+    )
+
     user = models.ForeignKey(User, on_delete = models.PROTECT)
     problem = models.ForeignKey(Problem, on_delete = models.PROTECT)
 
@@ -107,12 +146,32 @@ class Submission (models.Model):
             if wrong_test is not None:
                 updates['first_wrong_test'] = wrong_test
 
-            rows_updated = Submission.objects \
-                .filter(pk = submission_pk) \
-                .update(**updates)
+            submissions = Submission.objects \
+                .select_for_update() \
+                .filter(pk = submission_pk)
             
-            if rows_updated == 0:
+            if len(submissions) == 0:
                 raise Submission.DoesNotExist(
                     f"Could not set submission information for pk={submission_pk}")
-            
-        # TODO notify channel of change
+
+            submission = submissions[0]
+
+            old_status  : SubmissionStatus  = submission.status
+            old_verdict : SubmissionVerdict = submission.verdict
+
+            Submission.objects \
+                .filter(pk = submission_pk) \
+                .update(**updates)
+        
+        if submission.contest is None:
+            return
+        
+        if status != old_status and status is not None:
+            create_contest_state_event(
+                submission.contest, submission.pk, status, submission.user
+            )
+        if verdict != old_verdict and verdict is not None:
+            # TODO handle freeze
+            create_judgement_event(
+                submission.contest, submission.pk, verdict
+            )

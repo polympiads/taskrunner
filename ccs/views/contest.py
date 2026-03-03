@@ -10,7 +10,8 @@ from django.db import transaction
 from django.urls import reverse
 
 from ccs.models.contest import MAX_CONTEST_NAME_LENGTH, Contest
-from ccs.models.eventfeed import EventFeed, EventFeedKind
+from ccs.models.eventfeed import EventFeed
+from ccs.models.managers.contest import ContestManager
 from ccs.models.visible import parse_visibility
 from ccs.utils.responses import Json400
 from ccs.utils.validators import validate_reltime, validate_reltime_nullable, validate_time_nullable
@@ -59,7 +60,7 @@ class ContestsView (CollectionView[Contest]):
         if ('start_time' in updates) == ('countdown_pause_time' in updates):
             return Json400("There should be exactly one of the 'start_time' and 'countdown_pause_time' fields.")
         
-        contest = await Contest.objects.acreate_contest(**updates)
+        contest = await ContestManager.acreate_contest(**updates)
 
         return contest, reverse(REV_CONTEST_ITEM, kwargs = { 'pk': contest.pk })
 

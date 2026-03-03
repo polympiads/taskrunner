@@ -166,17 +166,21 @@ DEFAULT_WALL_TIME  = 1.0
 DEFAULT_EXTRA_TIME = 0.1
 DEFAULT_MEMORY_KB  = 256 * 1024 # 256 MB
 
-SANDBOX_RESULT_FOLDER = "/app/results"
+BASE_STORAGE_DIR = "/var/lib/taskrunner"
+
+SANDBOX_RESULT_FOLDER = BASE_STORAGE_DIR + "/results"
 
 PYTHON_EXECUTABLE = "/usr/bin/python3"
 CXX_COMPILER = "/usr/bin/g++"
 JAVA_COMPILER = "/usr/bin/javac"
 JAR_COMPILER = "/usr/bin/jar"
 JAVA_EXECUTABLE = "/usr/bin/java"
+JVM_DIRECTORIES = [ "/etc/alternatives", "/usr/lib/jvm", "/etc/java-21-openjdk/" ]
 
-PROBLEM_STORAGE_LOCATION = "/app/problems"
-STORAGE_SERVER_LOCATION  = "/app/storage/server"
-STORAGE_CLIENT_LOCATION  = "/app/storage/client"
+TEMPDIR_STORAGE_LOCATION = BASE_STORAGE_DIR + "/tmp"
+PROBLEM_STORAGE_LOCATION = BASE_STORAGE_DIR + "/problems"
+STORAGE_SERVER_LOCATION  = BASE_STORAGE_DIR + "/storage/server"
+STORAGE_CLIENT_LOCATION  = BASE_STORAGE_DIR + "/storage/client"
 STORAGE_CLIENT  = CacheClient( NetworkClient( "http://storage.polympiads.ch:8000", STORAGE_CLIENT_LOCATION ) )
 
 ROOT_URLCONF = 'storage.urls'

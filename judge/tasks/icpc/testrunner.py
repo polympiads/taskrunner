@@ -4,7 +4,7 @@ import enum
 import os
 from typing import List
 
-from asgiref.sync import sync_to_async
+from asgiref.sync import async_to_sync, sync_to_async
 from django.conf import settings
 
 from judge.error import JudgeError
@@ -143,11 +143,11 @@ def run_tests_task (
             submission: s_SubmissionInformation,
             test_cases: List[int]
         ) -> List[TestCasesOutput]:
-    return serialize_outputs( asyncio.run( _run_tests_task_and_check_for_errors(
+    return serialize_outputs( async_to_sync(_run_tests_task_and_check_for_errors)(
         deserialize_outputs(tests_already_done),
         SubmissionInformation.deserialize(submission),
         test_cases
-    ) ) )
+    ) )
 async def _run_tests_task_and_check_for_errors (
             tests_already_done: List[TestCasesOutput],
             submission: SubmissionInformation,
