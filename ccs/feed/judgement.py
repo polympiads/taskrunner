@@ -8,6 +8,8 @@ from ccs.models.managers.eventfeed import EventFeedKind, EventFeedManager
 
 from asgiref.sync import async_to_sync
 
+from submit.models.verdict import SubmissionVerdict
+
 class JudgementCCSJson (TypedDict):
     id                : str
     submission_id     : str
@@ -35,8 +37,8 @@ def create_judgement_event_params (
 def create_judgement_event (
         contest: "Contest",
         submission_id: int,
-        judgement_type: JudgementType
+        verdict: SubmissionVerdict
     ):
     return async_to_sync(
-        EventFeedManager.acreate_event(*create_judgement_event_params(contest, submission_id, judgement_type))
-    )
+        EventFeedManager.acreate_event
+    )(*create_judgement_event_params(contest, submission_id, JudgementType.from_verdict(verdict)))

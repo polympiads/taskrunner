@@ -40,14 +40,14 @@ def create_submission_event_params (
     ccs_json : SubmissionCCSJson = {
         "id": submission_id,
         "language_id": get_language(language).ccs_language_information["id"],
-        "problem_id": problem_id,
+        "problem_id": str(problem_id),
 
         "account_id": str(account.pk)
     }
     return (
         contest,
         submission_id,
-        EventFeedKind.STATE,
+        EventFeedKind.SUBMISSION,
         ccs_json
     ) # TODO determine if it should be PRIVATE / PUBLIC
 def create_contest_start_event (
@@ -61,8 +61,8 @@ def create_contest_start_event (
         account: User
     ):
     return async_to_sync(
-        EventFeedManager.acreate_event(*create_submission_event_params(contest, id, language, problem_id, account))
-    )
+        EventFeedManager.acreate_event
+    )(*create_submission_event_params(contest, id, language, problem_id, account))
 
 def create_submission_state_params (
         contest : Contest,
@@ -95,5 +95,5 @@ def create_contest_state_event (
         account : User
     ):
     return async_to_sync(
-        EventFeedManager.acreate_event(*create_submission_state_params(contest, submission_id, submission_state, account))
-    )
+        EventFeedManager.acreate_event
+    )(*create_submission_state_params(contest, submission_id, submission_state, account))

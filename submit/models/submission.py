@@ -69,7 +69,7 @@ class SubmissionManager (models.Manager):
             )
 
         if contest is not None:
-            create_contest_start_event(contest, submission.pk, language, problem.pk, user)
+            create_contest_start_event(contest, submission.pk, language_kind, problem.pk, user)
             create_contest_state_event(contest, submission.pk, submission.status, user)
 
         from judge.tasks.icpc.compile   import compile_task

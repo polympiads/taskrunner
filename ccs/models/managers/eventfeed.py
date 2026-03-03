@@ -3,7 +3,6 @@ import enum
 import json
 import channels.layers
 
-from asgiref.sync import async_to_sync, sync_to_async
 from typing    import Any, Literal, TypedDict
 from django.db import models
 from django.contrib.auth.models import User
@@ -39,9 +38,6 @@ class EventFeedManager:
         if lid is None:
             lid = -1
         return lid
-    @staticmethod
-    def find_latest () -> int:
-        return async_to_sync(EventFeedManager.afind_latest)
 
     @staticmethod
     def get_feed_queryset (contest: Contest, user: User, upto: int, since: int | None = None):
@@ -96,7 +92,3 @@ class EventFeedManager:
         await layer.group_send(contest.eventfeed_group, message)
 
         return event_feed
-    
-    @staticmethod
-    def create_event (*args, **kwargs):
-        return async_to_sync(EventFeedManager.acreate_event)(*args, **kwargs)

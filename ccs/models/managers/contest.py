@@ -18,9 +18,6 @@ class ContestManager:
         await acreate_contest_event(contest)
 
         return contest
-    @staticmethod
-    def create_contest (**updates):
-        return async_to_sync(ContestManager.acreate_contest)(**updates)
 
     @staticmethod
     def start_contest (contest_id: int):
@@ -39,5 +36,3 @@ class ContestManager:
                 await JudgementTypesCCSJson.acreate_judgement_types(contest)
             
             async_to_sync(send_events)()
-
-    astart_contest = sync_to_async(start_contest)
