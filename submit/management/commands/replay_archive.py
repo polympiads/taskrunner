@@ -146,7 +146,7 @@ class Command (BaseCommand):
                     print(f"Submit file [{team_user}, {problem}, {subfile}]")
                 subpk = submit_file(
                     get_team_user(team),
-                    Problem.objects.get(pk = pk_from_label[problem]),
+                    problem,
                     os.path.abspath( subfile )
                 )
 
