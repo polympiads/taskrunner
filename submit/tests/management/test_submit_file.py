@@ -6,7 +6,7 @@ from django.test import TransactionTestCase, override_settings
 
 from judge.languages import LanguageKind
 from judge.tests.languages.test_cpp import APLUSB_PROG as APLUSB_PROG_CPP
-from judge.tests.languages.test_java import APLUSB_PROG as APLUSB_PROG_JAVA
+from judge.tests.languages.test_java import APLUSB_PROG as APLUSB_PROG_JAVA, TWO_PUBLIC
 from judge.tests.languages.test_python import APLUSB_PROG as APLUSB_PROG_PYTHON
 from judge.tests.tasks.icpc.test_scheduler import eager_celery
 from problems.models.problem import Problem
@@ -119,6 +119,20 @@ class TestSubmitFileManager (TransactionTestCase):
             self.assertEqual(len(Submission.objects.all()), 1)
             submission = Submission.objects.all()[0]
             self.assertEqual( submission.verdict, SubmissionVerdict.ACCEPTED )
+    def test_submit_file_java_aplusb_two_publics (self):
+        problem = Problem.objects.create()
+        user = User.objects.create()
+
+        with eager_celery():
+            call_command("prepare_polygon", problem.pk, APLUSB_FILE)
+            problem = Problem.objects.get(pk = problem.pk)
+            with open(self.mkfile("index.java"), "w") as file:
+                file.write(TWO_PUBLIC)
+            call_command("submit_file", user.pk, problem.pk, self.mkfile("index.java"))
+            
+            self.assertEqual(len(Submission.objects.all()), 1)
+            submission = Submission.objects.all()[0]
+            self.assertEqual( submission.verdict, SubmissionVerdict.COMPILER_ERROR )
     def test_submit_file_unknown_extension_aplusb (self):
         problem = Problem.objects.create()
         user = User.objects.create()

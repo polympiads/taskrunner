@@ -10,7 +10,7 @@ import aiofiles.os
 
 from django.conf import settings
 if TYPE_CHECKING:
-    from ccs.views.languages import LanguagesCCSJson
+    from ccs.feed.languages import LanguagesCCSJson
 from judge.languages.base import CompiledLanguage
 from judge.error import JudgeError
 from sandbox.context import sandbox_open

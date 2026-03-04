@@ -66,6 +66,14 @@ class CompiledLanguage (Language):
 
     def get_executable_name (self, filename: str):
         raise NotImplementedError()
+    def get_source_code_filename (self, file: str) -> str:
+        """
+        Get the source filename for a given file.
+         - For most languages, this is just equivalent to taking the basename of the file
+         - In Java, if there is a public class X, then the filename should be X.java,
+           otherwise we may use any filename
+        """
+        return os.path.basename(file)
     def get_compilation_command (self, fileexe: str, filename: str):
         raise NotImplementedError()
     def get_compilation_commands (self, fileexe: str, filename: str, file: str):
@@ -83,7 +91,10 @@ class CompiledLanguage (Language):
             before_run: "Callable[[Sandbox]]" = None) -> "Tuple[bool, SandboxResult, str | None]":
         with start_as_current_span("compile_executable") as span:
             async with sandbox_open() as sandbox:
-                filename = os.path.basename(file)
+                try:
+                    filename = self.get_source_code_filename(file)
+                except self.FileFormatError as err:
+                    return False, None, str(err)
                 fileexe  = self.get_executable_name(filename)
                 span.set_attribute("executable:source", file)
                 span.set_attribute("executable:source:box", filename)

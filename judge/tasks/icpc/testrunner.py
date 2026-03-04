@@ -107,7 +107,10 @@ async def run_test (
         await sb_check.prepare_for_stdin( test_stdout, "prog_out.txt" )
         await sb_check.prepare_for_stdin( test_answer, "prog_ans.txt" )
         
-        check_results = await sb_check.run_sandbox( cmd_check + [ "prog_in.txt", "prog_out.txt", "prog_ans.txt" ] )
+        check_results = await sb_check.run_sandbox(
+            cmd_check + [ "prog_in.txt", "prog_out.txt", "prog_ans.txt" ],
+            time = None, wall_time = None, extra_time = None
+        )
         run_span.add_event("Checker finished")
         run_span.set_attribute("checker:sandbox:stdout", check_results.sandbox_stdout)
         run_span.set_attribute("checker:sandbox:stderr", check_results.sandbox_stderr)

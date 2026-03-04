@@ -14,9 +14,12 @@ class LanguageKind (enum.Enum):
 
 def get_language_kind_from_extension (ext: str) -> LanguageKind:
     match ext:
-        case ".py"  : return LanguageKind.PYTHON
-        case ".cpp" : return LanguageKind.CPP_23
-        case ".java": return LanguageKind.JAVA
+        case ".py" | ".py3" | ".pypy3" | ".pypy3-64":
+            return LanguageKind.PYTHON
+        case ".cpp" | ".c":
+            return LanguageKind.CPP_23
+        case ".java":
+            return LanguageKind.JAVA
     
     raise NotImplementedError(f"Could not recognize extension '{ext}'")
 def get_language (kind: LanguageKind) -> Language:

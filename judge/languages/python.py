@@ -8,7 +8,7 @@ from judge.languages.base import Language
 from sandbox.sandbox import Sandbox
 
 if TYPE_CHECKING:
-    from ccs.views.languages import LanguagesCCSJson
+    from ccs.feed.languages import LanguagesCCSJson
 
 class PythonLanguage (Language):
     def language_name(self):

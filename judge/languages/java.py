@@ -6,7 +6,7 @@ from tree_sitter import Language, Node, Parser, Query, QueryCursor
 
 from django.conf import settings
 if TYPE_CHECKING:
-    from ccs.views.languages import LanguagesCCSJson
+    from ccs.feed.languages import LanguagesCCSJson
 
 from judge.languages.base import CompiledLanguage
 from sandbox.isolate import Isolate
@@ -49,6 +49,31 @@ class JavaLanguage (CompiledLanguage):
             raise JavaLanguage.FileFormatError(
                 f"Multiple classes with public static void main: {', '.join(class_names)}")
         return class_names[0]
+    def find_public_class (self, content: bytes):
+        JAVA_LANGUAGE = Language(tsjava.language())
+        JAVA_PARSER   = Parser(JAVA_LANGUAGE)
+
+        tree = JAVA_PARSER.parse(content)
+
+        query = Query(JAVA_LANGUAGE, """
+            (class_declaration
+                (modifiers "public")
+                name: (identifier) @class_name)
+        """)
+
+        cursor = QueryCursor(query)
+        captures = cursor.captures(tree.root_node)
+        class_names = captures.get('class_name', [])
+        def node_to_string (node: Node):
+            return content[node.start_byte:node.end_byte].decode()
+        class_names = list(map(node_to_string, class_names))
+
+        if len(class_names) == 0:
+            return None
+        if len(class_names) > 1:
+            raise JavaLanguage.FileFormatError(
+                f"Multiple public classes: {', '.join(class_names)}")
+        return class_names[0]
 
     def enable_simple_memory (self) -> bool:
         return False
@@ -56,6 +81,13 @@ class JavaLanguage (CompiledLanguage):
         return Isolate.MAX_NUMBER_PROCESS
     def get_executable_name(self, filename):
         return os.path.splitext(filename)[0] + ".jar"
+    def get_source_code_filename(self, file):
+        with open(file, "rb") as fr:
+            entry = self.find_public_class(fr.read())
+            if entry is None:
+                return super().get_source_code_filename(file)
+            else:
+                return f"{entry}.java"
     def get_compilation_commands(self, fileexe, filename, file: str):
         with open(file, "rb") as file:
             content    = file.read()
