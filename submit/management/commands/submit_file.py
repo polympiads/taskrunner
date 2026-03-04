@@ -13,6 +13,33 @@ from problems.telemetry import start_as_current_span
 from submit.models.submission import Submission
 from asgiref.sync import async_to_sync
 
+def submit_file (
+        user       : "User",
+        problem    : "Problem",
+        submission : str,
+
+        contest : "Contest | None" = None
+    ):
+    async def run_upload_submission ():
+        location = settings.STORAGE_CLIENT.reserve()
+
+        await settings.STORAGE_CLIENT.upload(submission, location)
+
+        return location
+
+    with start_as_current_span("Submit.file"):
+        code_location = async_to_sync(run_upload_submission)()
+
+        return Submission.objects.create_submission(
+            user,
+            problem,
+            code_location,
+            get_language_kind_from_extension(
+                os.path.splitext(submission)[1]
+            ),
+            contest = contest
+        ).pk
+
 class Command (BaseCommand):
     help = "Create a submission"
 
@@ -39,22 +66,4 @@ class Command (BaseCommand):
         if not os.path.exists(submission):
             raise FileNotFoundError(f"Could not find submission code: {submission}")
 
-        async def run_upload_submission ():
-            location = settings.STORAGE_CLIENT.reserve()
-
-            await settings.STORAGE_CLIENT.upload(submission, location)
-
-            return location
-
-        with start_as_current_span("Submit.file"):
-            code_location = async_to_sync(run_upload_submission)()
-
-            Submission.objects.create_submission(
-                user,
-                problem,
-                code_location,
-                get_language_kind_from_extension(
-                    os.path.splitext(submission)[1]
-                ),
-                contest = contest
-            )
+        submit_file(user, problem, submission, contest)
