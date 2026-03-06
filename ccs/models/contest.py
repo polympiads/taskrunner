@@ -3,6 +3,7 @@ import datetime
 from typing import TYPE_CHECKING
 
 from asgiref.sync import async_to_sync
+from django.conf import settings
 from django.db import transaction
 from django.db import models
 from django.contrib.auth.models import User
@@ -43,6 +44,11 @@ class Contest (models.Model):
     thawed         = models.DateTimeField(default = None, null = True)
     finalized      = models.DateTimeField(default = None, null = True)
     end_of_updates = models.DateTimeField(default = None, null = True)
+
+    accounts = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through="ContestAccount",
+        related_name="contest_accounts")
     
     @property
     def eventfeed_group (self):
@@ -106,6 +112,17 @@ class Contest (models.Model):
         put_into("penalty_time",               self.get_penalty_time(),               Reltime.string_from_reltime)
         
         return result
+
+class ContestRole (enum.Enum):
+    TEAM  = 0
+    JUDGE = 1
+class ContestAccount (models.Model):
+    user    = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
+    role    = enum.EnumField(ContestRole)
+
+    class Meta:
+        unique_together = ('user', 'contest')
 
 @rules.predicate
 def is_contest_visible (user: User, contest: Contest):

@@ -3,7 +3,7 @@ from typing import Literal, NotRequired, TypedDict
 
 from django.contrib.auth.models import User
 
-from ccs.models.contest import Contest
+from ccs.models.contest import Contest, ContestAccount, ContestRole
 from ccs.models.managers.eventfeed import EventFeedKind, EventFeedManager
 from ccs.models.visible import Visibility
 from judge.languages import LanguageKind, get_language
@@ -34,7 +34,8 @@ def create_submission_event_params (
 
         account: User
     ):
-    # TODO determine if account is a team member
+    contest_account: ContestAccount = ContestAccount.objects.get(contest = contest, user = account)
+
     submission_id = str(id)
 
     ccs_json : SubmissionCCSJson = {
@@ -48,8 +49,10 @@ def create_submission_event_params (
         contest,
         submission_id,
         EventFeedKind.SUBMISSION,
-        ccs_json
-    ) # TODO determine if it should be PRIVATE / PUBLIC
+        ccs_json,
+        (Visibility.PUBLIC if contest_account.role == ContestRole.TEAM else Visibility.PRIVATE),
+        account
+    )
 def create_contest_start_event (
         contest: "Contest",
         

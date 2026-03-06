@@ -41,14 +41,23 @@ class SubmissionManager (models.Manager):
         contest : "Contest | None" = None
     ):
         if contest is not None:
-            if contest.started is None:
-                raise SubmitError("Cannot create submission for contest that hasn't started.")
+            from ccs.models.contest import ContestAccount, ContestRole
             
-            current_time = timezone.now()
-            delta_time   = current_time - contest.started
+            contest_account = ContestAccount.objects.filter(contest = contest, user = user)
+            if len(contest_account) == 0:
+                raise SubmitError("User cannot create a submission in that contest.")
+            
+            contest_account = contest_account[0]
 
-            if delta_time > contest.duration:
-                raise SubmitError("Cannot create submission after the end of the contest.")
+            if contest_account.role != ContestRole.JUDGE:
+                if contest.started is None:
+                    raise SubmitError("Cannot create submission for contest that hasn't started.")
+                
+                current_time = timezone.now()
+                delta_time   = current_time - contest.started
+
+                if delta_time > contest.duration:
+                    raise SubmitError("Cannot create submission after the end of the contest.")
 
         with transaction.atomic():
             language = get_language(language_kind)

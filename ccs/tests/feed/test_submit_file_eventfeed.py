@@ -7,7 +7,7 @@ from django.conf import settings
 from django.test import TransactionTestCase, override_settings
 from freezegun import freeze_time
 
-from ccs.models.contest import Contest
+from ccs.models.contest import Contest, ContestRole
 from ccs.models.eventfeed import EventFeed
 from ccs.models.managers.contest import ContestManager
 from ccs.models.visible import Visibility
@@ -90,6 +90,13 @@ class TestSubmitFileManager (TransactionTestCase):
                 visibility   = Visibility.PUBLIC
             )
             ContestManager.start_contest(self.contest3.pk)
+        
+        self.inc_user   = User.objects.create_user("inc_user")
+        self.team_user  = User.objects.create_user("team_user")
+        self.judge_user = User.objects.create_user("judge_user")
+        ContestManager.add_accounts(self.contest1.pk, [(self.team_user, ContestRole.TEAM), (self.judge_user, ContestRole.JUDGE)])
+        ContestManager.add_accounts(self.contest2.pk, [(self.team_user, ContestRole.TEAM), (self.judge_user, ContestRole.JUDGE)])
+        ContestManager.add_accounts(self.contest3.pk, [(self.team_user, ContestRole.TEAM), (self.judge_user, ContestRole.JUDGE)])
         EventFeed.objects.all().delete()
     def tearDown(self):
         self.patch_storage.__exit__(None, None, None)
@@ -101,7 +108,6 @@ class TestSubmitFileManager (TransactionTestCase):
     @freeze_time("2025-04-14 13:29:59.999")
     def test_submit_file_before_start (self):
         problem = Problem.objects.create()
-        user = User.objects.create()
 
         with eager_celery():
             call_command("prepare_polygon", problem.pk, APLUSB_FILE)
@@ -109,13 +115,14 @@ class TestSubmitFileManager (TransactionTestCase):
             with open(self.mkfile("index.cpp"), "w") as file:
                 file.write(APLUSB_PROG_CPP)
             with self.assertRaisesRegex(SubmitError, "Cannot create submission for contest that hasn't started\\."):
-                call_command("submit_file", user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest2.pk)
+                call_command("submit_file", self.team_user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest2.pk)
+            with self.assertRaisesRegex(SubmitError, "User cannot create a submission in that contest\\."):
+                call_command("submit_file", self.inc_user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest2.pk)
 
     @override_layer()
     @freeze_time("2025-04-14 18:30:00.001")
     def test_submit_file_after_end (self):
         problem = Problem.objects.create()
-        user = User.objects.create()
 
         with eager_celery():
             call_command("prepare_polygon", problem.pk, APLUSB_FILE)
@@ -123,12 +130,66 @@ class TestSubmitFileManager (TransactionTestCase):
             with open(self.mkfile("index.cpp"), "w") as file:
                 file.write(APLUSB_PROG_CPP)
             with self.assertRaisesRegex(SubmitError, "Cannot create submission after the end of the contest\\."):
-                call_command("submit_file", user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest3.pk)
+                call_command("submit_file", self.team_user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest3.pk)
+            with self.assertRaisesRegex(SubmitError, "User cannot create a submission in that contest\\."):
+                call_command("submit_file", self.inc_user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest3.pk)
+
+    @override_layer()
+    def test_judge_can_submit_anytime (self):
+        problem = Problem.objects.create()
+        with eager_celery():
+            call_command("prepare_polygon", problem.pk, APLUSB_FILE)
+            problem = Problem.objects.get(pk = problem.pk)
+
+        for time in ["2025-04-14 13:30:00.000", "2025-04-14 14:31:47.521", "2025-04-14 18:30:00.000", "2025-04-21 18:30:00.000"]:
+            with freeze_time(time):
+                EventFeed.objects.all().delete()
+
+                with eager_celery():
+                    with open(self.mkfile("index.cpp"), "w") as file:
+                        file.write(APLUSB_PROG_CPP)
+                    call_command("submit_file", self.judge_user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest3.pk)
+                
+                submission = list(Submission.objects.all())[-1]
+
+                payloads = list(map(lambda evt: json.loads(evt.full_payload), EventFeed.objects.all()))
+                prvts = list(map(lambda evt: (evt.visibility, evt.owner), EventFeed.objects.all()))
+                evt1 = EventFeed.objects.all()[0].pk
+
+                for x in prvts:
+                    self.assertEqual(x, (Visibility.PRIVATE, self.judge_user))
+
+                subid = str(submission.pk)
+                pid = str(problem.pk)
+                self.assertEqual(len(payloads), 6)
+                self.assertEqual(payloads[0],
+                    { "token": str(evt1), "id": subid, "type": "submission",
+                    "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(self.judge_user.pk)} })
+                self.assertEqual(payloads[1],
+                    { "token": str(evt1 + 1), "id": subid, "type": "submission-state",
+                    "data": {"submission_id": subid, "status": "starting"} })
+                self.assertEqual(payloads[2],
+                    { "token": str(evt1 + 2), "id": subid, "type": "submission-state",
+                    "data": {"submission_id": subid, "status": "compiling"} })
+                self.assertEqual(payloads[3],
+                    { "token": str(evt1 + 3), "id": subid, "type": "submission-state",
+                    "data": {"submission_id": subid, "status": "running"} })
+                self.assertEqual(payloads[4],
+                    { "token": str(evt1 + 4), "id": subid, "type": "submission-state",
+                    "data": {"submission_id": subid, "status": "finished"} })
+                self.assertEqual(payloads[5],
+                    { "token": str(evt1 + 5), "id": subid, "type": "judgements",
+                    "data": {"id": subid, "submission_id": subid, "judgement_type_id": "AC"} })
+    @override_layer()
+    def test_judge_can_submit_before_contest (self):
+        problem = Problem.objects.create()
+        with eager_celery():
+            call_command("prepare_polygon", problem.pk, APLUSB_FILE)
+            problem = Problem.objects.get(pk = problem.pk)
 
     @override_layer()
     def test_submit_during_contest (self):
         problem = Problem.objects.create()
-        user = User.objects.create()
         with eager_celery():
             call_command("prepare_polygon", problem.pk, APLUSB_FILE)
             problem = Problem.objects.get(pk = problem.pk)
@@ -140,19 +201,27 @@ class TestSubmitFileManager (TransactionTestCase):
                 with eager_celery():
                     with open(self.mkfile("index.cpp"), "w") as file:
                         file.write(APLUSB_PROG_CPP)
-                    call_command("submit_file", user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest1.pk)
+                    call_command("submit_file", self.team_user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest3.pk)
+                    with self.assertRaisesRegex(SubmitError, "User cannot create a submission in that contest\\."):
+                        call_command("submit_file", self.inc_user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest3.pk)
                 
                 submission = list(Submission.objects.all())[-1]
 
                 payloads = list(map(lambda evt: json.loads(evt.full_payload), EventFeed.objects.all()))
+                prvts = list(map(lambda evt: (evt.visibility, evt.owner), EventFeed.objects.all()))
                 evt1 = EventFeed.objects.all()[0].pk
+
+                for x in prvts[1:-1]:
+                    self.assertEqual(x, (Visibility.PRIVATE, self.team_user))
+                for x in [prvts[0], prvts[-1]]:
+                    self.assertEqual(x, (Visibility.PUBLIC, self.team_user))
 
                 subid = str(submission.pk)
                 pid = str(problem.pk)
                 self.assertEqual(len(payloads), 6)
                 self.assertEqual(payloads[0],
                     { "token": str(evt1), "id": subid, "type": "submission",
-                    "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(user.pk)} })
+                    "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(self.team_user.pk)} })
                 self.assertEqual(payloads[1],
                     { "token": str(evt1 + 1), "id": subid, "type": "submission-state",
                     "data": {"submission_id": subid, "status": "starting"} })
@@ -172,14 +241,13 @@ class TestSubmitFileManager (TransactionTestCase):
     @override_layer()
     def test_submit_file_cpp_aplusb (self):
         problem = Problem.objects.create()
-        user = User.objects.create()
 
         with eager_celery():
             call_command("prepare_polygon", problem.pk, APLUSB_FILE)
             problem = Problem.objects.get(pk = problem.pk)
             with open(self.mkfile("index.cpp"), "w") as file:
                 file.write(APLUSB_PROG_CPP)
-            call_command("submit_file", user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest1.pk)
+            call_command("submit_file", self.team_user.pk, problem.pk, self.mkfile("index.cpp"), contest = self.contest1.pk)
         
         submission = Submission.objects.all()[0]
 
@@ -191,7 +259,7 @@ class TestSubmitFileManager (TransactionTestCase):
         self.assertEqual(len(payloads), 6)
         self.assertEqual(payloads[0],
             { "token": str(evt1), "id": subid, "type": "submission",
-             "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(user.pk)} })
+             "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(self.team_user.pk)} })
         self.assertEqual(payloads[1],
             { "token": str(evt1 + 1), "id": subid, "type": "submission-state",
              "data": {"submission_id": subid, "status": "starting"} })
