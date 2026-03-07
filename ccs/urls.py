@@ -20,10 +20,12 @@ from django.contrib import admin
 from django.urls import path
 
 from ccs.auth.login import REV_API_LOGIN, api_login
+from ccs.auth.whoami import REV_WHO_AM_I, WhoAmIView
 from ccs.views.contest import REV_CONTEST_ITEM, REV_CONTEST_LIST, ContestView, ContestsView
 from ccs.views.problem import REV_STATEMENT, StatementView
 
 urlpatterns = [
+    path('whoami/', WhoAmIView.as_view(), name = REV_WHO_AM_I),
     path('login/', api_login, name = REV_API_LOGIN),
 
     path('contests/',          ContestsView.as_view(), name=REV_CONTEST_LIST),
