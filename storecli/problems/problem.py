@@ -10,6 +10,7 @@ class TestMetadata (TypedDict):
     input  : str
     output : str
 class ProblemMetadata (TypedDict):
+    name  : str
     tests : List[TestMetadata]
 
     time_limit    : float
@@ -44,3 +45,5 @@ class Problem:
         return self.get_path( self.problem_json["tests"][test_id]["output"] )
     def get_number_tests (self) -> int:
         return len(self.problem_json["tests"])
+    def get_name (self) -> str:
+        return self.problem_json["name"]

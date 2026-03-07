@@ -8,6 +8,8 @@ import tempfile
 import zipfile
 import aiofiles
 
+from ccs.feed.problems import create_problem_event
+from ccs.models.contest import ContestProblem
 from taskrunner.celery import judge_app
 from problems.telemetry import start_as_current_span
 from asgiref.sync import sync_to_async, async_to_sync
@@ -100,6 +102,7 @@ async def _prepare_polygon_problem (
             metadata: ProblemMetadata = { "tests": [] }
             metadata["time_limit"] = problem.timelimit
             metadata["memory_limit"] = problem.memlimit
+            metadata["name"] = problem.name
 
             await asyncio.gather(
                 sync_to_async(run_problems_copy)(unzippedFolder, resultFolder, problem, metadata),                 
@@ -114,3 +117,15 @@ async def _prepare_polygon_problem (
             await settings.STORAGE_CLIENT.upload(resultFile, target_loc)
             
             await sync_to_async(Preparation.objects.finish_preparation)( preparation_id, target_loc, problem_id )
+            
+            async for contest_pb in ContestProblem.objects \
+                    .select_related("contest") \
+                    .filter(problem_id = problem_id):
+                await create_problem_event(
+                    contest_pb.contest,
+                    problem_id,
+                    contest_pb.label,
+                    metadata["name"],
+                    metadata["time_limit"],
+                    metadata["memory_limit"] // 1024 # mem_limit in KiB to MiB
+                )

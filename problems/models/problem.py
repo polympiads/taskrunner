@@ -1,6 +1,11 @@
 
+from typing import TYPE_CHECKING
+
 from django.db import models, transaction
 from django_enumfield import enum
+
+if TYPE_CHECKING:
+    from ccs.models.contest import Contest
 
 class ProblemManager (models.Manager):
     @staticmethod
@@ -9,6 +14,21 @@ class ProblemManager (models.Manager):
     @staticmethod
     def create_from_polygon (pkg_storage: str):
         problem = Problem.objects.create(problem_location = None)
+
+        from problems.models.preparation import Preparation
+        Preparation.objects.create_polygon_preparation(problem, pkg_storage)
+
+        return problem
+    @staticmethod
+    def create_from_polygon_for_contest (pkg_storage: str, contest: "Contest", label: str):
+        problem = Problem.objects.create(problem_location = None)
+
+        from ccs.models.contest import ContestProblem
+        ContestProblem.objects.create(
+            problem = problem,
+            contest = contest,
+            label   = label
+        )
 
         from problems.models.preparation import Preparation
         Preparation.objects.create_polygon_preparation(problem, pkg_storage)

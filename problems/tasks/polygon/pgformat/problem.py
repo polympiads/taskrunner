@@ -7,6 +7,7 @@ class PolygonProblem:
     timelimit : float
     memlimit  : int
     checker   : str
+    name      : str
 
     def __init__ (self):
         self.tests   = []
@@ -32,6 +33,8 @@ def read_polygon_problem (path: str):
             for y in x:
                 explore(y)
 
+        if x.tag == "name":
+            problem.name = x.attrib["value"]
         if x.tag == "test": number_tests += 1
         if x.tag == "input-path-pattern": input_pattern = x.text
         if x.tag == "answer-path-pattern": answer_pattern = x.text

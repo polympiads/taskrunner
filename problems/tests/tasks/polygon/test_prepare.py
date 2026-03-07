@@ -1,10 +1,16 @@
 
 import asyncio
+import datetime
+import json
 import subprocess
 import os
 import django.test
 from django.test import override_settings
 
+from ccs.models.contest import Contest
+from ccs.models.eventfeed import EventFeed
+from ccs.models.managers.contest import ContestManager
+from ccs.models.visible import Visibility
 from judge.error import JudgeError
 from judge.tests.tasks.icpc.test_scheduler import eager_celery
 from problems.models.preparation import PolygonPreparation, Preparation, PreparationKind, PreparationStatus
@@ -92,6 +98,7 @@ class TestPreparePolygonProblem (django.test.TransactionTestCase):
         problem = asyncio.run( ProblemStorage.download("proc-hc2-2025-A1") )
 
         self.assertEqual( problem.get_number_tests(), 19 )
+        self.assertEqual( problem.get_name(), "Cleopatra's Carpets (Easy)" )
 
         for idx in range (19):
             self.assertEqual( problem.get_input_file(idx), problem.get_path("tests/%02d" % (idx + 1)) )
@@ -112,6 +119,7 @@ class TestPreparePolygonProblem (django.test.TransactionTestCase):
         problem = asyncio.run( ProblemStorage.download("proc-a-plus-b") )
 
         self.assertEqual( problem.get_number_tests(), 9 )
+        self.assertEqual( problem.get_name(), "VW50aWwgYSBuZXcgZGF3bg==" )
 
         for idx in range (problem.get_number_tests()):
             self.assertEqual( problem.get_input_file(idx), problem.get_path("tests/%02d" % (idx + 1)) )
@@ -168,12 +176,64 @@ class TestPreparePolygonProblem (django.test.TransactionTestCase):
             self.problem.delete()
             Problem.objects.create_from_polygon( "a-plus-b" )
             
-            problem = asyncio.run( ProblemStorage.download("proc-a-plus-b") )
             self.problem = Problem.objects.all()[0]
             self.preparation = Preparation.objects.all()[0]
             self.polygon_preparation = PolygonPreparation.objects.all()[0]
+            problem = asyncio.run( ProblemStorage.download(self.problem.problem_location) )
 
             self.assertEqual( problem.get_number_tests(), 9 )
+            self.assertEqual( problem.get_name(), "VW50aWwgYSBuZXcgZGF3bg==" )
+
+            for idx in range (problem.get_number_tests()):
+                self.assertEqual( problem.get_input_file(idx), problem.get_path("tests/%02d" % (idx + 1)) )
+                self.assertEqual( problem.get_output_file(idx), problem.get_path("tests/%02d.a" % (idx + 1)) )
+            
+            self.assertTrue(os.path.exists(problem.get_path("checker")))
+            self.assertProblem(PreparationStatus.SUCCESS)
+    @override_settings(ROOT_URLCONF="ccs.urls")
+    def test_create_from_polygon_for_contest (self):
+        contest = asyncio.run(ContestManager.acreate_contest(
+            visibility = Visibility.PUBLIC,
+            name       = "hc2-2025",
+
+            duration = datetime.timedelta(hours = 5),
+            penalty_time = datetime.timedelta(minutes = 20)
+        ))
+        EventFeed.objects.all().delete()
+        
+        with eager_celery():
+            self.polygon_preparation.delete()
+            self.preparation.delete()
+            self.problem.delete()
+            Problem.objects.create_from_polygon_for_contest(
+                "a-plus-b",
+                contest,
+                "A1"
+            )
+            
+            self.problem = Problem.objects.all()[0]
+            self.preparation = Preparation.objects.all()[0]
+            self.polygon_preparation = PolygonPreparation.objects.all()[0]
+            problem = asyncio.run( ProblemStorage.download(self.problem.problem_location) )
+
+            self.assertEqual(len(EventFeed.objects.all()), 1)
+            self.assertEqual(
+                EventFeed.objects.all()[0] \
+                    .contest.pk,
+                contest.pk
+            )
+            self.assertEqual(
+                json.loads(EventFeed.objects.all()[0] \
+                    .full_payload),
+                { "id": str(self.problem.pk), "token": str(EventFeed.objects.all()[0].pk), "type": "problems", 
+                 "data": { "id": str(self.problem.pk), "label": "A1", "name": "VW50aWwgYSBuZXcgZGF3bg==",
+                    "statement": [{ "mime": "application/pdf",
+                        "href": f"/contests/{contest.pk}/problems/{self.problem.pk}/statement/" }],
+                    "memory_limit": 238, "time_limit": 1.0 }}
+            )
+
+            self.assertEqual( problem.get_number_tests(), 9 )
+            self.assertEqual( problem.get_name(), "VW50aWwgYSBuZXcgZGF3bg==" )
 
             for idx in range (problem.get_number_tests()):
                 self.assertEqual( problem.get_input_file(idx), problem.get_path("tests/%02d" % (idx + 1)) )

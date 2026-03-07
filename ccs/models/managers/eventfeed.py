@@ -19,6 +19,7 @@ class EventFeedKind (enum.Enum):
     SUBMISSION       = "submission"
     JUDGEMENT        = "judgements"
 
+    PROBLEM = "problems"
     ACCOUNT = "accounts"
     TEAM    = "teams"
 

@@ -49,6 +49,10 @@ class Contest (models.Model):
         settings.AUTH_USER_MODEL,
         through="ContestAccount",
         related_name="contest_accounts")
+    problems = models.ManyToManyField(
+        "problems.Problem",
+        through="ContestProblem",
+        related_name="contest_problems")
     
     @property
     def eventfeed_group (self):
@@ -123,6 +127,14 @@ class ContestAccount (models.Model):
 
     class Meta:
         unique_together = ('user', 'contest')
+class ContestProblem (models.Model):
+    contest = models.ForeignKey(Contest, on_delete=models.PROTECT)
+    problem = models.ForeignKey("problems.Problem", on_delete=models.PROTECT)
+
+    label = models.TextField()
+    
+    class Meta:
+        unique_together = ('problem', 'contest')
 
 @rules.predicate
 def is_contest_visible (user: User, contest: Contest):
