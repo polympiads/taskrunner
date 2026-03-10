@@ -68,7 +68,7 @@ async def create_problem_event (
             time_limit_seconds,
             memory_limit_mbytes,
             
-            reverse(REV_STATEMENT, kwargs = { "pk": contest.pk, "pbpk": id })
+            reverse(REV_STATEMENT, kwargs = { "pk": contest.pk, "pbpk": id }, urlconf="ccs.urls")
         ),
         Visibility.PUBLIC
     )

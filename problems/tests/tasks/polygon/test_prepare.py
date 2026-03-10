@@ -190,7 +190,6 @@ class TestPreparePolygonProblem (django.test.TransactionTestCase):
             
             self.assertTrue(os.path.exists(problem.get_path("checker")))
             self.assertProblem(PreparationStatus.SUCCESS)
-    @override_settings(ROOT_URLCONF="ccs.urls")
     def test_create_from_polygon_for_contest (self):
         contest = asyncio.run(ContestManager.acreate_contest(
             visibility = Visibility.PUBLIC,
