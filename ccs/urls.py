@@ -21,6 +21,7 @@ from django.urls import path
 
 from ccs.auth.login import REV_API_LOGIN, api_login
 from ccs.auth.whoami import REV_WHO_AM_I, WhoAmIView
+from ccs.views.clarifications import REV_CLARIFICATIONS, ClarificationsView
 from ccs.views.contest import REV_CONTEST_ITEM, REV_CONTEST_LIST, ContestView, ContestsView
 from ccs.views.problem import REV_STATEMENT, StatementView
 
@@ -30,6 +31,8 @@ urlpatterns = [
 
     path('contests/',          ContestsView.as_view(), name=REV_CONTEST_LIST),
     path('contests/<int:pk>/', ContestView.as_view(),  name=REV_CONTEST_ITEM),
+
+    path('contests/<int:contest_id>/clarifications/', ClarificationsView.as_view(), name=REV_CLARIFICATIONS),
 
     path('contests/<int:pk>/problems/<int:pbpk>/statement/', StatementView.as_view(), name = REV_STATEMENT)
 ]
