@@ -71,10 +71,11 @@ class TestProblemStatement (TransactionTestCase):
         return Client().get("/login/", { "username": username, "password": "password" }).json()['session_id']
 
     def run_request (self, username: str, contest_id: int, problem_id: int):
-        session = self.login(username)
+        if username is not None:
+            session = self.login(username)
         return Client().get(
             reverse(REV_STATEMENT, kwargs={ "pk": contest_id, "pbpk": problem_id }),
-            headers = { "X-Session-ID": session }
+            headers = { "X-Session-ID": session } if username is not None else {}
         )
     def verify_valid (self, response, content: bytes):
         response_content = b"".join([chunk for chunk in response.streaming_content])
@@ -161,6 +162,9 @@ class TestProblemStatement (TransactionTestCase):
         storage = asyncio.run(ProblemStorage.download(self.problem.problem_location))
         with open(storage.get_statement(), "rb") as file:
             content = file.read()
+        self.verify_valid(
+            self.run_request(None, self.contest1.pk, self.problem.pk),
+            content)
         self.verify_valid(
             self.run_request("user1", self.contest1.pk, self.problem.pk),
             content)

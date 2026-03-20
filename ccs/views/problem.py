@@ -26,7 +26,9 @@ class StatementView (View):
         if not await sync_to_async(can_view_contest)():
             return JsonResponseFailure(404, "Contest does not exist.")
 
-        is_judge = await ContestAccount.objects.filter(user = user, role = ContestRole.JUDGE).aexists()
+        is_judge = False
+        if user.is_authenticated:
+            is_judge = await ContestAccount.objects.filter(user = user, role = ContestRole.JUDGE).aexists()
         
         if contest.started is None and not is_judge:
             return JsonResponseFailure(403, "Contest hasn't started yet.")
