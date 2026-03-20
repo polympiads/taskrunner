@@ -228,7 +228,7 @@ class TestPreparePolygonProblem (django.test.TransactionTestCase):
                  "data": { "id": str(self.problem.pk), "label": "A1", "name": "VW50aWwgYSBuZXcgZGF3bg==",
                     "statement": [{ "mime": "application/pdf",
                         "href": f"/contests/{contest.pk}/problems/{self.problem.pk}/statement/" }],
-                    "memory_limit": 238, "time_limit": 1.0 }}
+                    "memory_limit": 238, "time_limit": 1.0, "preparation_id": str(self.polygon_preparation.pk) }}
             )
 
             self.assertEqual( problem.get_number_tests(), 9 )

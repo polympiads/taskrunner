@@ -129,5 +129,6 @@ async def _prepare_polygon_problem (
                     contest_pb.label,
                     metadata["name"],
                     metadata["time_limit"],
-                    metadata["memory_limit"] // 1024 # mem_limit in KiB to MiB
+                    metadata["memory_limit"] // 1024, # mem_limit in KiB to MiB
+                    preparation_id
                 )

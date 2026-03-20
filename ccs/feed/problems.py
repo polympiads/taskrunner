@@ -19,6 +19,7 @@ class ProblemsCCSJson (TypedDict):
 
     time_limit   : float
     memory_limit : int
+    preparation_id: str
 
     statement : "List[StatementCCSJson]"
 
@@ -30,7 +31,8 @@ def create_problem_event_payload (
         time_limit_seconds  : float,
         memory_limit_mbytes : int,
         
-        statement: str
+        statement: str,
+        preparation_id: str
     ) -> ProblemsCCSJson:
     return {
         "id": str(id),
@@ -43,7 +45,8 @@ def create_problem_event_payload (
             }
         ],
         "time_limit": time_limit_seconds,
-        "memory_limit": memory_limit_mbytes
+        "memory_limit": memory_limit_mbytes,
+        "preparation_id": preparation_id
     }
 
 async def create_problem_event (
@@ -54,7 +57,9 @@ async def create_problem_event (
         name  : str,
         
         time_limit_seconds  : float,
-        memory_limit_mbytes : int
+        memory_limit_mbytes : int,
+
+        preparation_id: int
     ):
     await EventFeedManager.acreate_event(
         contest,
@@ -68,7 +73,9 @@ async def create_problem_event (
             time_limit_seconds,
             memory_limit_mbytes,
             
-            reverse(REV_STATEMENT, kwargs = { "pk": contest.pk, "pbpk": id }, urlconf="ccs.urls")
+            reverse(REV_STATEMENT, kwargs = { "pk": contest.pk, "pbpk": id }, urlconf="ccs.urls"),
+
+            str(preparation_id)
         ),
         Visibility.PUBLIC
     )
