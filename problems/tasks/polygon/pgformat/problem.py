@@ -8,6 +8,7 @@ class PolygonProblem:
     memlimit  : int
     checker   : str
     name      : str
+    statement : str
 
     def __init__ (self):
         self.tests   = []
@@ -38,6 +39,8 @@ def read_polygon_problem (path: str):
         if x.tag == "test": number_tests += 1
         if x.tag == "input-path-pattern": input_pattern = x.text
         if x.tag == "answer-path-pattern": answer_pattern = x.text
+        if x.tag == "statement" and x.attrib["language"] == "english" and x.attrib["type"] == "application/pdf":
+            problem.statement = x.attrib["path"]
         if x.tag == "checker":
             for y in x:
                 if y.tag == "source":

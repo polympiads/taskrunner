@@ -239,4 +239,5 @@ class TestPreparePolygonProblem (django.test.TransactionTestCase):
                 self.assertEqual( problem.get_output_file(idx), problem.get_path("tests/%02d.a" % (idx + 1)) )
             
             self.assertTrue(os.path.exists(problem.get_path("checker")))
+            self.assertTrue(os.path.exists(problem.get_statement()))
             self.assertProblem(PreparationStatus.SUCCESS)
