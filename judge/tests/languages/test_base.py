@@ -15,6 +15,8 @@ class TestLanguage(unittest.IsolatedAsyncioTestCase):
     async def test_default_functions (self):
         lang = Language()
         with self.assertRaises(NotImplementedError):
+            lang.extension
+        with self.assertRaises(NotImplementedError):
             lang.language_name()
         with self.assertRaises(NotImplementedError):
             lang.get_execution_command("file")

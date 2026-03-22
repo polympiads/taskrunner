@@ -16,3 +16,7 @@ class TestLanguageKind(unittest.TestCase):
     def test_default_names (self):
         assert get_language_name(LanguageKind.PYTHON) == "Python"
         assert get_language_name(LanguageKind.CPP_23) == "C++23"
+    def test_extensions (self):
+        assert get_language(LanguageKind.CPP_23).extension == ".cpp"
+        assert get_language(LanguageKind.JAVA).extension == ".java"
+        assert get_language(LanguageKind.PYTHON).extension == ".py"

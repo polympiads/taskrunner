@@ -24,6 +24,7 @@ from ccs.auth.whoami import REV_WHO_AM_I, WhoAmIView
 from ccs.views.clarifications import REV_CLARIFICATIONS, ClarificationsView
 from ccs.views.contest import REV_CONTEST_ITEM, REV_CONTEST_LIST, ContestView, ContestsView
 from ccs.views.problem import REV_STATEMENT, StatementView
+from ccs.views.submissions import REV_SUBMIT, REV_VIEW_CODE, SubmissionCodeView, SubmitView
 
 urlpatterns = [
     path('whoami/', WhoAmIView.as_view(), name = REV_WHO_AM_I),
@@ -34,5 +35,8 @@ urlpatterns = [
 
     path('contests/<int:contest_id>/clarifications/', ClarificationsView.as_view(), name=REV_CLARIFICATIONS),
 
-    path('contests/<int:pk>/problems/<int:pbpk>/statement/', StatementView.as_view(), name = REV_STATEMENT)
+    path('contests/<int:pk>/problems/<int:pbpk>/statement/', StatementView.as_view(), name = REV_STATEMENT),
+
+    path('contests/<int:pk>/submissions/', SubmitView.as_view(), name = REV_SUBMIT),
+    path('contests/<int:pk>/submissions/<int:subpk>/code/', SubmissionCodeView.as_view(), name = REV_VIEW_CODE)
 ]

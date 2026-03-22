@@ -24,6 +24,9 @@ class CppLanguage (CompiledLanguage):
     
     def language_name(self):
         return f"C++{self.cxx_version}"
+    @property
+    def extension(self):
+        return ".cpp"
 
     def get_executable_name(self, filename):
         return os.path.splitext(filename)[0]

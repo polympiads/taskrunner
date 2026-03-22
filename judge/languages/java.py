@@ -74,7 +74,9 @@ class JavaLanguage (CompiledLanguage):
             raise JavaLanguage.FileFormatError(
                 f"Multiple public classes: {', '.join(class_names)}")
         return class_names[0]
-
+    @property
+    def extension(self):
+        return ".java"
     def enable_simple_memory (self) -> bool:
         return False
     def number_execution_processes(self):
