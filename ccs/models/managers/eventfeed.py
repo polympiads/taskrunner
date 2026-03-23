@@ -24,6 +24,8 @@ class EventFeedKind (enum.Enum):
     ACCOUNT = "accounts"
     TEAM    = "teams"
 
+    PRINT = "prints"
+
     # Non CCS compliant
     SUBMISSION_STATE = "submission-state"
 

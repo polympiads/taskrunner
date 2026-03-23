@@ -47,7 +47,8 @@ class SubmissionCodeView (View):
 
         is_judge = False
         if user.is_authenticated:
-            is_judge = await ContestAccount.objects.filter(user = user, role = ContestRole.JUDGE).aexists()
+            is_judge = await ContestAccount.objects.filter(
+                contest = contest, user = user, role = ContestRole.JUDGE).aexists()
 
         if submission.user != user and not user.is_staff and not is_judge:
             return JsonResponseFailure(404, "Submission does not exist.")

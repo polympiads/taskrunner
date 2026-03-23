@@ -26,6 +26,8 @@ from ccs.views.contest import REV_CONTEST_ITEM, REV_CONTEST_LIST, ContestView, C
 from ccs.views.problem import REV_STATEMENT, StatementView
 from ccs.views.submissions import REV_SUBMIT, REV_VIEW_CODE, SubmissionCodeView, SubmitView
 
+import printing.urls
+
 urlpatterns = [
     path('whoami/', WhoAmIView.as_view(), name = REV_WHO_AM_I),
     path('login/', api_login, name = REV_API_LOGIN),
@@ -39,4 +41,4 @@ urlpatterns = [
 
     path('contests/<int:pk>/submissions/', SubmitView.as_view(), name = REV_SUBMIT),
     path('contests/<int:pk>/submissions/<int:subpk>/code/', SubmissionCodeView.as_view(), name = REV_VIEW_CODE)
-]
+] + printing.urls.urlpatterns

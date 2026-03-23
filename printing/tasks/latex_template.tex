@@ -1,0 +1,51 @@
+% Freeze the date and time
+\pdfinfoomitdate=1
+\pdfsuppressptexinfo=-1
+\pdftrailerid{} % Removes the unique ID based on time/path
+
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry} % Adjust margins as needed
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyvrb}
+\usepackage{fvextra} % This automatically loads fancyvrb
+
+% Optional: Style the look of the code
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,               % Wrap long lines
+    frame=single,                  % Adds a box around the code
+    numbers=left,                  % Optional: adds line numbers
+    numberstyle=\tiny\color{gray},
+    showstringspaces=false,
+    breakatwhitespace=false,
+    columns=flexible,
+    escapechar={},       % Disables single-character escapes
+    escapeinside={}{}   % Disables character-pair escapes (e.g., (* *)
+}
+\fvset{
+    breaklines=true,      % Turns on line breaking
+    breakanywhere=true   % Allows breaking in the middle of a word if needed
+}
+
+\begin{document}
+
+% --- Title Page ---
+\begin{titlepage}
+    \centering
+    \vspace*{5cm}
+
+    \lstinputlisting{team_name}
+    \lstinputlisting{team_location}
+
+    \vfill
+
+    {\Large \textbf{CONFIDENTIAL}}
+\end{titlepage}
+\newpage
+
+% This command pulls the file and handles page breaks automatically
+\lstinputlisting{input_code}
+
+\end{document}

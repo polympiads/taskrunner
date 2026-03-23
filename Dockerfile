@@ -28,6 +28,9 @@ RUN apt-get install -y nano
 RUN apt-get update
 RUN apt-get install -y python3 python3-pip
 
+RUN apt-get update
+RUN apt-get install texlive-latex-extra texlive-fonts-recommended
+
 WORKDIR /app
 COPY requirements.txt .
 

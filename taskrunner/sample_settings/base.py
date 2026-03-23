@@ -53,7 +53,8 @@ INSTALLED_APPS = [
     'problems',
     'storage',
     'rules',
-    'ccs'
+    'ccs',
+    "printing"
 ]
 
 MIDDLEWARE = [
@@ -190,6 +191,10 @@ RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "pyamqp://guest@broker.polympiad
 
 CELERY_BACKEND = REDIS_HOST + "0"
 CELERY_BROKER  = RABBITMQ_HOST
+
+MAX_PRINT_SIZE = 32 * 1024
+MAX_PRINT_WORD_SIZE = 80
+MAX_PRINT_LINE_COUNT = 512
 
 MAX_SUBMISSION_SIZE = 32 * 1024
 MAX_LEN_ERROR_MESSAGE = 1024
