@@ -38,7 +38,7 @@ def create_judgement_event_params (
         submission_id,
         EventFeedKind.JUDGEMENT,
         judgement,
-        (Visibility.PUBLIC if contest_account.role == ContestRole.TEAM else Visibility.PRIVATE),
+        (Visibility.PUBLIC if contest_account.role == ContestRole.TEAM and not contest.is_frozen() else Visibility.PRIVATE),
         submission.user
     )
 def create_judgement_event (

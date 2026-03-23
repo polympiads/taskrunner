@@ -140,5 +140,5 @@ class SubmitView (View):
         except SubmitError as error:
             return JsonResponseFailure(403, str(error))
 
-        submission_ccs = (await sync_to_async(create_submission_event_params)(contest, submission.pk, language_kind, problem_id, user))[3]
+        submission_ccs = (await sync_to_async(create_submission_event_params)(contest, submission.pk, language_kind, problem_id, submission.created_at, user))[3]
         return JsonResponse(submission_ccs, status = 201)

@@ -12,6 +12,7 @@ from ccs.models.eventfeed import EventFeed
 from ccs.models.managers.contest import ContestManager
 from ccs.models.visible import Visibility
 from ccs.tests.views.test_eventfeed import override_layer
+from ccs.utils.time import Reltime, Time
 from judge.languages import LanguageKind
 from judge.tests.languages.test_cpp import APLUSB_PROG as APLUSB_PROG_CPP
 from judge.tests.languages.test_java import APLUSB_PROG as APLUSB_PROG_JAVA
@@ -72,9 +73,12 @@ class TestSubmitFileManager (TransactionTestCase):
             name         = "hc2",
             duration     = datetime.timedelta(hours = 5),
             penalty_time = datetime.timedelta(minutes = 20),
-            visibility   = Visibility.PUBLIC
+            visibility   = Visibility.PUBLIC,
+
+            scoreboard_freeze_duration = None
         )
         ContestManager.start_contest(self.contest1.pk)
+        self.contest1.refresh_from_db()
         self.contest2 = async_to_sync(ContestManager.acreate_contest)(
             name         = "hc2",
             duration     = datetime.timedelta(hours = 5),
@@ -87,9 +91,11 @@ class TestSubmitFileManager (TransactionTestCase):
                 name         = "hc2",
                 duration     = datetime.timedelta(hours = 5),
                 penalty_time = datetime.timedelta(minutes = 20),
-                visibility   = Visibility.PUBLIC
+                visibility   = Visibility.PUBLIC,
+                scoreboard_freeze_duration = datetime.timedelta(hours = 1)
             )
             ContestManager.start_contest(self.contest3.pk)
+            self.contest3.refresh_from_db()
         
         self.inc_user   = User.objects.create_user("inc_user")
         self.team_user  = User.objects.create_user("team_user")
@@ -164,7 +170,14 @@ class TestSubmitFileManager (TransactionTestCase):
                 self.assertEqual(len(payloads), 6)
                 self.assertEqual(payloads[0],
                     { "token": str(evt1), "id": subid, "type": "submission",
-                    "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(self.judge_user.pk)} })
+                    "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(self.judge_user.pk),
+                        "time": Time.string_from_time(datetime.datetime.fromisoformat(time + "Z")),
+                        "contest_time": Reltime.string_from_reltime(
+                            max(
+                                datetime.timedelta(),
+                                datetime.datetime.fromisoformat(time + "Z") - self.contest3.started
+                            ) if self.contest3.started is not None else datetime.timedelta() 
+                        )} })
                 self.assertEqual(payloads[1],
                     { "token": str(evt1 + 1), "id": subid, "type": "submission-state",
                     "data": {"submission_id": subid, "status": "starting"} })
@@ -194,7 +207,9 @@ class TestSubmitFileManager (TransactionTestCase):
             call_command("prepare_polygon", problem.pk, APLUSB_FILE)
             problem = Problem.objects.get(pk = problem.pk)
 
-        for time in ["2025-04-14 13:30:00.000", "2025-04-14 14:31:47.521", "2025-04-14 18:30:00.000"]:
+        offset = -1
+        for time in ["2025-04-14 13:30:00.000", "2025-04-14 14:31:47.521", "2025-04-14 17:29:59", "2025-04-14 17:30:00", "2025-04-14 18:30:00.000"]:
+            offset += 1
             with freeze_time(time):
                 EventFeed.objects.all().delete()
 
@@ -211,17 +226,30 @@ class TestSubmitFileManager (TransactionTestCase):
                 prvts = list(map(lambda evt: (evt.visibility, evt.owner), EventFeed.objects.all()))
                 evt1 = EventFeed.objects.all()[0].pk
 
-                for x in prvts[1:-1]:
-                    self.assertEqual(x, (Visibility.PRIVATE, self.team_user))
-                for x in [prvts[0], prvts[-1]]:
-                    self.assertEqual(x, (Visibility.PUBLIC, self.team_user))
+                if offset < 3:
+                    for x in prvts[1:-1]:
+                        self.assertEqual(x, (Visibility.PRIVATE, self.team_user))
+                    for x in [prvts[0], prvts[-1]]:
+                        self.assertEqual(x, (Visibility.PUBLIC, self.team_user))
+                else:
+                    for x in prvts[1:]:
+                        self.assertEqual(x, (Visibility.PRIVATE, self.team_user))
+                    for x in [prvts[0]]:
+                        self.assertEqual(x, (Visibility.PUBLIC, self.team_user))
 
                 subid = str(submission.pk)
                 pid = str(problem.pk)
                 self.assertEqual(len(payloads), 6)
                 self.assertEqual(payloads[0],
                     { "token": str(evt1), "id": subid, "type": "submission",
-                    "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(self.team_user.pk)} })
+                    "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(self.team_user.pk),
+                        "time": Time.string_from_time(datetime.datetime.fromisoformat(time + "Z")),
+                        "contest_time": Reltime.string_from_reltime(
+                            max(
+                                datetime.timedelta(),
+                                datetime.datetime.fromisoformat(time + "Z") - self.contest3.started
+                            ) if self.contest3.started is not None else datetime.timedelta() 
+                        )} })
                 self.assertEqual(payloads[1],
                     { "token": str(evt1 + 1), "id": subid, "type": "submission-state",
                     "data": {"submission_id": subid, "status": "starting"} })
@@ -259,7 +287,14 @@ class TestSubmitFileManager (TransactionTestCase):
         self.assertEqual(len(payloads), 6)
         self.assertEqual(payloads[0],
             { "token": str(evt1), "id": subid, "type": "submission",
-             "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(self.team_user.pk)} })
+             "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(self.team_user.pk),
+                "time": Time.string_from_time(submission.created_at),
+                "contest_time": Reltime.string_from_reltime(
+                    max(
+                        datetime.timedelta(),
+                        submission.created_at - self.contest1.started
+                    ) if self.contest1.started is not None else datetime.timedelta() 
+                )} })
         self.assertEqual(payloads[1],
             { "token": str(evt1 + 1), "id": subid, "type": "submission-state",
              "data": {"submission_id": subid, "status": "starting"} })
