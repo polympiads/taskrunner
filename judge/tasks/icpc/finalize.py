@@ -1,5 +1,6 @@
 
 from typing import List
+from balloons.models import Balloon
 from judge.tasks.icpc.subinfo import SubmissionInformation, s_SubmissionInformation
 from judge.tasks.icpc.testoutput import deserialize_outputs, s_TestCasesOutput, as_string_buffer, flatten_test_cases_output
 from judge.telemetry import start_as_current_span
@@ -46,3 +47,8 @@ def finalize_task (
             verdict = submission_verdict,
             wrong_test = target_test
         )
+
+        if submission_verdict == SubmissionVerdict.ACCEPTED:
+            submission = Submission.objects.get(pk = submission_info.submission_id)
+            if submission.contest is not None and not submission.contest.is_frozen():
+                Balloon.create_balloon(submission.contest, submission.user, submission.problem)

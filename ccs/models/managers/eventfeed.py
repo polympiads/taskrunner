@@ -25,6 +25,7 @@ class EventFeedKind (enum.Enum):
     TEAM    = "teams"
 
     PRINT = "prints"
+    BALLOON = "balloons"
 
     # Non CCS compliant
     SUBMISSION_STATE = "submission-state"

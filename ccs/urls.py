@@ -27,6 +27,7 @@ from ccs.views.problem import REV_STATEMENT, StatementView
 from ccs.views.submissions import REV_SUBMIT, REV_VIEW_CODE, SubmissionCodeView, SubmitView
 
 import printing.urls
+import balloons.urls
 
 urlpatterns = [
     path('whoami/', WhoAmIView.as_view(), name = REV_WHO_AM_I),
@@ -41,4 +42,4 @@ urlpatterns = [
 
     path('contests/<int:pk>/submissions/', SubmitView.as_view(), name = REV_SUBMIT),
     path('contests/<int:pk>/submissions/<int:subpk>/code/', SubmissionCodeView.as_view(), name = REV_VIEW_CODE)
-] + printing.urls.urlpatterns
+] + printing.urls.urlpatterns + balloons.urls.urlpatterns

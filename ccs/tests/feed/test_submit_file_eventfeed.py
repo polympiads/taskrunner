@@ -7,6 +7,7 @@ from django.conf import settings
 from django.test import TransactionTestCase, override_settings
 from freezegun import freeze_time
 
+from balloons.models import Balloon
 from ccs.models.contest import Contest, ContestRole
 from ccs.models.eventfeed import EventFeed
 from ccs.models.managers.contest import ContestManager
@@ -227,9 +228,10 @@ class TestSubmitFileManager (TransactionTestCase):
                 evt1 = EventFeed.objects.all()[0].pk
 
                 if offset < 3:
-                    for x in prvts[1:-1]:
+                    self.assertEqual(prvts[-1], (Visibility.PRIVATE, None))
+                    for x in prvts[1:-2]:
                         self.assertEqual(x, (Visibility.PRIVATE, self.team_user))
-                    for x in [prvts[0], prvts[-1]]:
+                    for x in [prvts[0], prvts[-2]]:
                         self.assertEqual(x, (Visibility.PUBLIC, self.team_user))
                 else:
                     for x in prvts[1:]:
@@ -239,7 +241,12 @@ class TestSubmitFileManager (TransactionTestCase):
 
                 subid = str(submission.pk)
                 pid = str(problem.pk)
-                self.assertEqual(len(payloads), 6)
+                
+                if offset < 3:
+                    self.assertEqual(len(payloads), 7)
+                    balloon = Balloon.objects.get()
+                else:
+                    self.assertEqual(len(payloads), 6)
                 self.assertEqual(payloads[0],
                     { "token": str(evt1), "id": subid, "type": "submission",
                     "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(self.team_user.pk),
@@ -265,6 +272,11 @@ class TestSubmitFileManager (TransactionTestCase):
                 self.assertEqual(payloads[5],
                     { "token": str(evt1 + 5), "id": subid, "type": "judgements",
                     "data": {"id": subid, "submission_id": subid, "judgement_type_id": "AC"} })
+                if offset < 3:
+                    self.assertEqual(payloads[6],
+                        { "token": str(evt1 + 6), "id": str(balloon.pk), "type": "balloons",
+                        "data": {"id": str(balloon.pk), "problem_id": str(problem.id), "account_id": str(self.team_user.pk), "status": "pending"} })
+                    balloon.delete()
 
     @override_layer()
     def test_submit_file_cpp_aplusb (self):
@@ -282,9 +294,11 @@ class TestSubmitFileManager (TransactionTestCase):
         payloads = list(map(lambda evt: json.loads(evt.full_payload), EventFeed.objects.all()))
         evt1 = EventFeed.objects.all()[0].pk
 
+        balloon = Balloon.objects.get()
+
         subid = str(submission.pk)
         pid = str(problem.pk)
-        self.assertEqual(len(payloads), 6)
+        self.assertEqual(len(payloads), 7)
         self.assertEqual(payloads[0],
             { "token": str(evt1), "id": subid, "type": "submission",
              "data": {"id": subid, "language_id": "cpp", "problem_id": pid, "account_id": str(self.team_user.pk),
@@ -310,3 +324,6 @@ class TestSubmitFileManager (TransactionTestCase):
         self.assertEqual(payloads[5],
             { "token": str(evt1 + 5), "id": subid, "type": "judgements",
              "data": {"id": subid, "submission_id": subid, "judgement_type_id": "AC"} })
+        self.assertEqual(payloads[6],
+            { "token": str(evt1 + 6), "id": str(balloon.pk), "type": "balloons",
+            "data": {"id": str(balloon.pk), "problem_id": str(problem.id), "account_id": str(self.team_user.pk), "status": "pending"} })
