@@ -51,7 +51,30 @@ class TestContestStart (TransactionTestCase):
                "data":{"id": str(self.contest.pk), "name": "pubct", "formal_name": "pubct",
                     "duration": "5:00:00.000",
                     "penalty_time": "0:20:00.000", "scoreboard_type": "pass-fail",
-                    "scoreboard_freeze_duration": "0:00:00.000"}}
+                    "scoreboard_freeze_duration": "0:00:00.000"}},
+                    
+            # Languages
+            {"token": str(base_uuid + 1), "id": "python3", "type": "languages",
+                "data": {"id": "python3", "name": "Python 3", "extensions": []}},
+            {"token": str(base_uuid + 2), "id": "cpp", "type": "languages",
+                "data": {"id": "cpp", "name": "GNU C++", "extensions": []}},
+            {"token": str(base_uuid + 3), "id": "java", "type": "languages",
+                "data": {"id": "java", "name": "Java", "extensions": []}},
+            # Judgement Types
+            {"token": str(base_uuid + 4), "id": "RE", "type": "judgement-types",
+                "data": {"id": "RE", "name": "Runtime Error", "penalty": True, "solved": False}},
+            {"token": str(base_uuid + 5), "id": "TLE", "type": "judgement-types",
+                "data": {"id": "TLE", "name": "Time Limit Exceeded", "penalty": True, "solved": False}},
+            {"token": str(base_uuid + 6), "id": "MLE", "type": "judgement-types",
+                "data": {"id": "MLE", "name": "Memory Limit Exceeded", "penalty": True, "solved": False}},
+            {"token": str(base_uuid + 7), "id": "WA", "type": "judgement-types",
+                "data": {"id": "WA", "name": "Wrong Answer", "penalty": True, "solved": False}},
+            {"token": str(base_uuid + 8), "id": "CE", "type": "judgement-types",
+                "data": {"id": "CE", "name": "Compilation Error", "penalty": False, "solved": False}},
+            {"token": str(base_uuid + 9), "id": "AC", "type": "judgement-types",
+                "data": {"id": "AC", "name": "Accepted", "penalty": False, "solved": True}},
+            {"token": str(base_uuid + 10), "id": "JE", "type": "judgement-types",
+                "data": {"id": "JE", "name": "Judge Error", "penalty": False, "solved": False}}
         )
     def test_start_contest (self):
         with freeze_time( "2025-04-14 13:30:00" ):
@@ -76,30 +99,30 @@ class TestContestStart (TransactionTestCase):
                "data":{"name": "pubct", "formal_name": "pubct", "duration": "5:00:00.000",
                     "penalty_time": "0:20:00.000", "scoreboard_type": "pass-fail",
                     "scoreboard_freeze_duration": "0:00:00.000", "id": str(self.contest.pk)}},
-            # Contest State
-            {"token": str(base_uuid + 1), "id": "contest-start", "type": "state", "data": {
-                "end_of_updates": None, "ended": None, "finalized": None, "frozen": None,
-                "started": "2025-04-14T13:30:00.000Z", "thawed": None}},
             # Languages
-            {"token": str(base_uuid + 2), "id": "python3", "type": "languages",
+            {"token": str(base_uuid + 1), "id": "python3", "type": "languages",
                 "data": {"id": "python3", "name": "Python 3", "extensions": []}},
-            {"token": str(base_uuid + 3), "id": "cpp", "type": "languages",
+            {"token": str(base_uuid + 2), "id": "cpp", "type": "languages",
                 "data": {"id": "cpp", "name": "GNU C++", "extensions": []}},
-            {"token": str(base_uuid + 4), "id": "java", "type": "languages",
+            {"token": str(base_uuid + 3), "id": "java", "type": "languages",
                 "data": {"id": "java", "name": "Java", "extensions": []}},
             # Judgement Types
-            {"token": str(base_uuid + 5), "id": "RE", "type": "judgement-types",
+            {"token": str(base_uuid + 4), "id": "RE", "type": "judgement-types",
                 "data": {"id": "RE", "name": "Runtime Error", "penalty": True, "solved": False}},
-            {"token": str(base_uuid + 6), "id": "TLE", "type": "judgement-types",
+            {"token": str(base_uuid + 5), "id": "TLE", "type": "judgement-types",
                 "data": {"id": "TLE", "name": "Time Limit Exceeded", "penalty": True, "solved": False}},
-            {"token": str(base_uuid + 7), "id": "MLE", "type": "judgement-types",
+            {"token": str(base_uuid + 6), "id": "MLE", "type": "judgement-types",
                 "data": {"id": "MLE", "name": "Memory Limit Exceeded", "penalty": True, "solved": False}},
-            {"token": str(base_uuid + 8), "id": "WA", "type": "judgement-types",
+            {"token": str(base_uuid + 7), "id": "WA", "type": "judgement-types",
                 "data": {"id": "WA", "name": "Wrong Answer", "penalty": True, "solved": False}},
-            {"token": str(base_uuid + 9), "id": "CE", "type": "judgement-types",
+            {"token": str(base_uuid + 8), "id": "CE", "type": "judgement-types",
                 "data": {"id": "CE", "name": "Compilation Error", "penalty": False, "solved": False}},
-            {"token": str(base_uuid + 10), "id": "AC", "type": "judgement-types",
+            {"token": str(base_uuid + 9), "id": "AC", "type": "judgement-types",
                 "data": {"id": "AC", "name": "Accepted", "penalty": False, "solved": True}},
-            {"token": str(base_uuid + 11), "id": "JE", "type": "judgement-types",
-                "data": {"id": "JE", "name": "Judge Error", "penalty": False, "solved": False}}
+            {"token": str(base_uuid + 10), "id": "JE", "type": "judgement-types",
+                "data": {"id": "JE", "name": "Judge Error", "penalty": False, "solved": False}},
+            # Contest State
+            {"token": str(base_uuid + 11), "id": "contest-start", "type": "state", "data": {
+                "end_of_updates": None, "ended": None, "finalized": None, "frozen": None,
+                "started": "2025-04-14T13:30:00.000Z", "thawed": None}}
         )

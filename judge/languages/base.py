@@ -20,6 +20,9 @@ class Language:
         raise NotImplementedError()
 
     @property
+    def extension (self) -> str:
+        raise NotImplementedError()
+    @property
     def ccs_language_information (self) -> "LanguagesCCSJson":
         raise NotImplementedError()
 

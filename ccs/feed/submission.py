@@ -1,4 +1,5 @@
 
+import datetime
 from typing import Literal, NotRequired, TypedDict
 
 from django.contrib.auth.models import User
@@ -6,6 +7,7 @@ from django.contrib.auth.models import User
 from ccs.models.contest import Contest, ContestAccount, ContestRole
 from ccs.models.managers.eventfeed import EventFeedKind, EventFeedManager
 from ccs.models.visible import Visibility
+from ccs.utils.time import Reltime, Time
 from judge.languages import LanguageKind, get_language
 
 from asgiref.sync import async_to_sync
@@ -21,6 +23,9 @@ class SubmissionCCSJson (TypedDict):
     team_id    : NotRequired[str]
     account_id : NotRequired[str]
 
+    time : str
+    contest_time : str
+
 class SubmissionStateCCSJson (TypedDict):
     submission_id : str
     status : "Literal['starting', 'compiling', 'running', 'finished', 'failed']"
@@ -32,18 +37,26 @@ def create_submission_event_params (
         language   : LanguageKind,
         problem_id : int,
 
+        time: datetime.datetime,
+
         account: User
     ):
     contest_account: ContestAccount = ContestAccount.objects.get(contest = contest, user = account)
 
     submission_id = str(id)
 
+    contest_time = datetime.timedelta()
+    if contest.started is not None and contest.started < time:
+        contest_time = time - contest.started
+
     ccs_json : SubmissionCCSJson = {
         "id": submission_id,
         "language_id": get_language(language).ccs_language_information["id"],
         "problem_id": str(problem_id),
 
-        "account_id": str(account.pk)
+        "account_id": str(account.pk),
+        "time": Time.string_from_time(time),
+        "contest_time": Reltime.string_from_reltime(contest_time)
     }
     return (
         contest,
@@ -60,12 +73,14 @@ def create_contest_start_event (
 
         language   : LanguageKind,
         problem_id : int,
+        
+        time: datetime.datetime,
 
         account: User
     ):
     return async_to_sync(
         EventFeedManager.acreate_event
-    )(*create_submission_event_params(contest, id, language, problem_id, account))
+    )(*create_submission_event_params(contest, id, language, problem_id, time, account))
 
 def create_submission_state_params (
         contest : Contest,

@@ -21,6 +21,9 @@ class ContestManager:
         contest = await Contest.objects.acreate(**updates)
 
         await acreate_contest_event(contest)
+        
+        await LanguagesCCSJson.acreate_languages_events(contest)
+        await JudgementTypesCCSJson.acreate_judgement_types(contest)
 
         return contest
 
@@ -36,9 +39,6 @@ class ContestManager:
         
             async def send_events ():
                 await acreate_contest_start_event(contest)
-                
-                await LanguagesCCSJson.acreate_languages_events(contest)
-                await JudgementTypesCCSJson.acreate_judgement_types(contest)
             
             async_to_sync(send_events)()
 

@@ -53,7 +53,17 @@ class Contest (models.Model):
         "problems.Problem",
         through="ContestProblem",
         related_name="contest_problems")
-    
+
+    def is_frozen (self):
+        # A contest that isn't started can't be frozen
+        # A contest that has no freeze duration will not be frozen
+        if self.started is None or self.scoreboard_freeze_duration is None:
+            return False
+        
+        freeze_time = self.started + self.duration - self.scoreboard_freeze_duration
+
+        return timezone.now() >= freeze_time
+
     @property
     def eventfeed_group (self):
         return "contest_eventfeed__" + str(self.pk)

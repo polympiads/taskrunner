@@ -78,7 +78,7 @@ class SubmissionManager (models.Manager):
             )
 
         if contest is not None:
-            create_contest_start_event(contest, submission.pk, language_kind, problem.pk, user)
+            create_contest_start_event(contest, submission.pk, language_kind, problem.pk, submission.created_at, user)
             create_contest_state_event(contest, submission.pk, submission.status, user)
 
         from judge.tasks.icpc.compile   import compile_task
@@ -139,6 +139,8 @@ class Submission (models.Model):
     exec_location = models.TextField()
 
     first_wrong_test = models.IntegerField( default = -1 )
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     objects : "models.Manager[Submission] | SubmissionManager" = SubmissionManager()
 

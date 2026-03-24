@@ -18,10 +18,14 @@ class EventFeedKind (enum.Enum):
     JUDGEMENT_TYPES  = "judgement-types"
     SUBMISSION       = "submission"
     JUDGEMENT        = "judgements"
+    CLARIFICATION    = "clarifications"
 
     PROBLEM = "problems"
     ACCOUNT = "accounts"
     TEAM    = "teams"
+
+    PRINT = "prints"
+    BALLOON = "balloons"
 
     # Non CCS compliant
     SUBMISSION_STATE = "submission-state"

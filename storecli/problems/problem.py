@@ -47,3 +47,5 @@ class Problem:
         return len(self.problem_json["tests"])
     def get_name (self) -> str:
         return self.problem_json["name"]
+    def get_statement (self):
+        return self.get_path("statement.pdf")

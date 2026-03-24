@@ -22,6 +22,8 @@ from sandbox.sandbox import Sandbox
 from storecli.problems.problem import ProblemMetadata
 
 def run_problems_copy (unzippedFolder: str, resultFolder: str, problem: PolygonProblem, metadata: ProblemMetadata):
+    with start_as_current_span("copy statements"):
+        shutil.copy( os.path.join(unzippedFolder, problem.statement), os.path.join( resultFolder, "statement.pdf" ) )
     with start_as_current_span("copy problems"):
         os.mkdir( os.path.join( resultFolder, "tests" ) )
 
@@ -127,5 +129,6 @@ async def _prepare_polygon_problem (
                     contest_pb.label,
                     metadata["name"],
                     metadata["time_limit"],
-                    metadata["memory_limit"] // 1024 # mem_limit in KiB to MiB
+                    metadata["memory_limit"] // 1024, # mem_limit in KiB to MiB
+                    preparation_id
                 )

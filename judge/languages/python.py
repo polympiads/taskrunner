@@ -16,7 +16,9 @@ class PythonLanguage (Language):
     
     def get_execution_command (self, filename: str):
         return [settings.PYTHON_EXECUTABLE, filename]
-
+    @property
+    def extension(self):
+        return ".py"
     @property
     def ccs_language_information (self) -> "LanguagesCCSJson":
         return {
