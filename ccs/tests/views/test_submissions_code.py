@@ -23,6 +23,7 @@ from storecli.inmemory import InMemoryStorageClient
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from submit.models.submission import Submission
+from django.conf import settings
 
 class SubmissionCodeTests (TransactionTestCase):
     def setUp(self):
@@ -71,7 +72,7 @@ class SubmissionCodeTests (TransactionTestCase):
                 'django.contrib.messages.middleware.MessageMiddleware',
                 'django.middleware.clickjacking.XFrameOptionsMiddleware',
             ],
-            STORAGE_CLIENT = InMemoryStorageClient("/tmp")
+            STORAGE_CLIENT = InMemoryStorageClient(settings.STORAGE_CLIENT_LOCATION)
         )
         self.new_settings.__enter__()
 

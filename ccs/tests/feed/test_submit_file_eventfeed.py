@@ -28,6 +28,7 @@ from problems.tests.tasks.polygon.test_prepare import get_test_package_location
 from storecli.inmemory import InMemoryStorageClient
 from submit.models.submission import Submission, SubmitError
 from submit.models.verdict import SubmissionVerdict
+from django.conf import settings
 
 from taskrunner.celery import judge_app
 from asgiref.sync import async_to_sync, sync_to_async
@@ -66,7 +67,7 @@ int main () {
 
 class TestSubmitFileManager (TransactionTestCase):
     def setUp(self):
-        self.inmemory_storage = InMemoryStorageClient("/tmp")
+        self.inmemory_storage = InMemoryStorageClient(settings.STORAGE_CLIENT_LOCATION)
         self.patch_storage = override_settings(STORAGE_CLIENT=self.inmemory_storage)
         self.patch_storage.__enter__()
 

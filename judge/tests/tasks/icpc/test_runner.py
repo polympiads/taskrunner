@@ -23,6 +23,7 @@ from submit.models.submission import Submission
 from django.contrib.auth.models import User
 
 from submit.models.verdict import SubmissionVerdict, TestCaseVerdict
+from django.conf import settings
 
 # Wrong Answer
 APLUSB_PROG_WA = """
@@ -117,7 +118,7 @@ def custom_mle_read_from (lines: List[str]) -> "SandboxStatistics":
 
 class TestTestRunnerTask (django.test.TransactionTestCase):
     def setUp(self):
-        self.inmemory_storage = InMemoryStorageClient("/tmp")
+        self.inmemory_storage = InMemoryStorageClient(settings.STORAGE_CLIENT_LOCATION)
         self.patch_storage = override_settings(STORAGE_CLIENT=self.inmemory_storage)
         self.patch_storage.__enter__()
 

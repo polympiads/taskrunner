@@ -19,6 +19,7 @@ from problems.models.problem import Problem
 from problems.tests.management.test_prepare_polygon_cmd import APLUSB_FILE
 from storecli.inmemory import InMemoryStorageClient
 from storecli.problems.storage import ProblemStorage
+from django.conf import settings
 
 class TestProblemStatement (TransactionTestCase):
     def setUp(self):
@@ -60,7 +61,7 @@ class TestProblemStatement (TransactionTestCase):
                 'django.contrib.messages.middleware.MessageMiddleware',
                 'django.middleware.clickjacking.XFrameOptionsMiddleware',
             ],
-            STORAGE_CLIENT = InMemoryStorageClient("/tmp")
+            STORAGE_CLIENT = InMemoryStorageClient(settings.STORAGE_CLIENT_LOCATION)
         )
         self.new_settings.__enter__()
 

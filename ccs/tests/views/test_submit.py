@@ -27,6 +27,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from submit.models.submission import Submission
 from submit.models.verdict import SubmissionVerdict
+from django.conf import settings
 
 class TestSubmitView (TransactionTestCase):
     def setUp(self):
@@ -68,7 +69,7 @@ class TestSubmitView (TransactionTestCase):
                 'django.contrib.messages.middleware.MessageMiddleware',
                 'django.middleware.clickjacking.XFrameOptionsMiddleware',
             ],
-            STORAGE_CLIENT = InMemoryStorageClient("/tmp")
+            STORAGE_CLIENT = InMemoryStorageClient(settings.STORAGE_CLIENT_LOCATION)
         )
         self.new_settings.__enter__()
 

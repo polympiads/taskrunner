@@ -19,6 +19,7 @@ from problems.tasks.polygon.prepare import prepare_polygon_problem
 from storecli.base import BaseStorageClient
 from storecli.inmemory import InMemoryStorageClient
 from storecli.problems.storage import ProblemStorage
+from django.conf import settings
 
 TEST_POLYGON_PACKAGES = [
     ("hc2-2025-A1", "hc2_2025_A1.zip"),
@@ -57,7 +58,7 @@ def compile_polygon_packages (proc_target = None):
 
 class TestPreparePolygonProblem (django.test.TransactionTestCase):
     def setUp(self):
-        self.inmemory_storage = InMemoryStorageClient("/tmp")
+        self.inmemory_storage = InMemoryStorageClient(settings.STORAGE_CLIENT_LOCATION)
         self.patch_storage = override_settings(STORAGE_CLIENT=self.inmemory_storage)
         self.patch_storage.__enter__()
 

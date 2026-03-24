@@ -17,6 +17,7 @@ from judge.tests.tasks.icpc.test_scheduler import eager_celery
 from printing.models import ContestPrint, PrintStatus
 from storecli.inmemory import InMemoryStorageClient
 from django.contrib.auth.models import User
+from django.conf import settings
 
 class MockStream:
     def __init__ (self, stream: bytes):
@@ -67,7 +68,7 @@ class PrintTaskTestCase (TransactionTestCase):
             penalty_time = timedelta(minutes = 20),
             visibility   = Visibility.PUBLIC
         ) )
-        self.storage_client = InMemoryStorageClient("/tmp")
+        self.storage_client = InMemoryStorageClient(settings.STORAGE_CLIENT_LOCATION)
         self.new_settings = override_settings(
             ROOT_URLCONF="ccs.urls",            
             MIDDLEWARE = [
