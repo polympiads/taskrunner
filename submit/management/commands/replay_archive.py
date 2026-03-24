@@ -1,5 +1,6 @@
 
 import argparse
+import asyncio
 import datetime
 import json
 import os
@@ -12,6 +13,9 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.management import BaseCommand, call_command
 
+from ccs.models.contest import Contest, ContestProblem, ContestRole
+from ccs.models.managers.contest import ContestManager
+from ccs.models.visible import Visibility
 from problems.models.preparation import Preparation, PreparationStatus
 from problems.models.problem import Problem
 from problems.telemetry import start_as_current_span
@@ -42,7 +46,7 @@ class Command (BaseCommand):
         return parser
     def add_arguments(self, parser):
         parser.add_argument("file",       type=str, help="The archive to replay")
-        parser.add_argument("--contest",  type=str, help="The name of the contest to create")
+        parser.add_argument("--contest-id",  type=int, help="The id of the contest to use")
         parser.add_argument("--speedup",  default=1, type=float, help="The speedup to apply to the replay")
         parser.add_argument("--slow-threshold", default=30, type=float, help="Number of seconds before triggering too slow message")
 
@@ -51,12 +55,14 @@ class Command (BaseCommand):
             print(f"Calling command '{command}' with", args, kwargs)
         return call_command(command, *args, **kwargs)
 
-    def handle (self, file: str, contest: "str | None" = None, speedup: "float" = 1, slow_threshold: "float" = 30, verbosity: int = 0, *args, **kwargs):
+    def handle (self, file: str, contest_id: int, speedup: "float" = 1, slow_threshold: "float" = 30, verbosity: int = 0, *args, **kwargs):
         self.verbosity = verbosity
         
         if not os.path.exists(file):
             raise FileNotFoundError(f"The archive '{file}' does not exist.")
         
+        contest = Contest.objects.get(pk = contest_id)
+
         os.makedirs( settings.TEMPDIR_STORAGE_LOCATION, exist_ok=True )
 
         with tempfile.TemporaryDirectory(prefix = settings.TEMPDIR_STORAGE_LOCATION, delete = False) as tmpdir:
@@ -80,6 +86,8 @@ class Command (BaseCommand):
                 pb_label = subfile.split(".")[0]
 
                 pk_from_label[pb_label] = problem.pk
+                
+                link = ContestProblem.objects.create(contest = contest, problem = problem, label = pb_label)
 
             for label, pk in pk_from_label.items():
                 while True:
@@ -115,6 +123,8 @@ class Command (BaseCommand):
 
             local_start_time = time.time()
             print("Start contest...")
+            ContestManager.start_contest(contest.pk)
+            contest.refresh_from_db()
 
             to_inspect = []
 
@@ -122,7 +132,9 @@ class Command (BaseCommand):
                 users = list(User.objects.filter(username = team))
                 if len(users) != 0:
                     return users[0]
-                return User.objects.create_user(team)
+                user = User.objects.create_user(team)
+                ContestManager.add_accounts(contest.pk, [(user, ContestRole.TEAM)])
+                return user
             def find_submission (code: str) -> "str | None":
                 code = code + "."
 
@@ -147,7 +159,8 @@ class Command (BaseCommand):
                 subpk = submit_file(
                     get_team_user(team),
                     problem,
-                    os.path.abspath( subfile )
+                    os.path.abspath( subfile ),
+                    contest
                 )
 
                 true_verdict = None
