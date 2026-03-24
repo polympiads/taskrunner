@@ -203,7 +203,7 @@ MAX_TESTS_PER_BATCH = 8
 
 WALL_TIME_ADDITIONAL = 0.1
 
-USE_CGROUPS = True
+USE_CGROUPS = False
 
 ASGI_APPLICATION = "taskrunner.asgi.application"
 
