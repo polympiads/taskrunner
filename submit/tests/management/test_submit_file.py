@@ -55,7 +55,7 @@ int main () {
 
 class TestSubmitFileManager (TransactionTestCase):
     def setUp(self):
-        self.inmemory_storage = InMemoryStorageClient("/tmp")
+        self.inmemory_storage = InMemoryStorageClient(settings.STORAGE_CLIENT_LOCATION)
         self.patch_storage = override_settings(STORAGE_CLIENT=self.inmemory_storage)
         self.patch_storage.__enter__()
     def tearDown(self):

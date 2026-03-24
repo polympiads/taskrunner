@@ -11,10 +11,11 @@ from storecli.problems.storage import ProblemStorage
 
 tests_folder = os.path.dirname(os.path.dirname(__file__))
 APLUSB_FILE = os.path.join(tests_folder, "tasks", "polygon", "assets", "a-plus-b.zip")
+from django.conf import settings
 
 class TestPreparePolygonCommand (TransactionTestCase):
     def setUp(self):
-        self.inmemory_storage = InMemoryStorageClient("/tmp")
+        self.inmemory_storage = InMemoryStorageClient(settings.STORAGE_CLIENT_LOCATION)
         self.patch_storage = override_settings(STORAGE_CLIENT=self.inmemory_storage)
         self.patch_storage.__enter__()
     def tearDown(self):

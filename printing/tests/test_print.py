@@ -21,6 +21,7 @@ from printing.views.print import REV_PRINT_CREATE
 from storecli.inmemory import InMemoryStorageClient
 
 from django.contrib.auth.models import User
+from django.conf import settings
 
 class TestCreateView (TransactionTestCase):
     def setUp(self):
@@ -44,7 +45,7 @@ class TestCreateView (TransactionTestCase):
         ContestManager.add_accounts(self.contest1.pk, [ (self.user2, ContestRole.TEAM), (self.admin, ContestRole.JUDGE) ])
         ContestManager.add_accounts(self.contest2.pk, [ (self.user2, ContestRole.TEAM), (self.admin, ContestRole.JUDGE) ])
 
-        self.storage_client = InMemoryStorageClient("/tmp")
+        self.storage_client = InMemoryStorageClient(settings.STORAGE_CLIENT_LOCATION)
         self.new_settings = override_settings(
             ROOT_URLCONF="ccs.urls",            
             MIDDLEWARE = [
