@@ -66,7 +66,7 @@ class EventFeedManager:
                 )
             )
         
-        return queryset
+        return queryset.order_by("id")
     
     @staticmethod
     async def acreate_event (
