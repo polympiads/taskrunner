@@ -9,6 +9,11 @@ REV_WHO_AM_I = "whoami"
 
 class WhoAmIJSON (TypedDict):
     """
+    Id of the user
+      Is present if and only if is authenticated
+    """
+    id: str
+    """
     Username of the user
       Is present if and only if is authenticated
     """
@@ -43,5 +48,6 @@ class WhoAmIView(View):
             
             json["is_staff"] = request.user.is_staff
             json["username"] = request.user.username
+            json["id"] = str(request.user.pk)
 
         return JsonResponse( json, status = 200 )

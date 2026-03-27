@@ -14,10 +14,10 @@ class TestWhoAmI (TransactionTestCase):
         self.reqfact = RequestFactory()
         self.view = WhoAmIView.as_view()
 
-        User.objects.create_user(username = "user", password = "password")
-        User.objects.create_user(username = "staff", password = "password", is_staff = True)
-        User.objects.create_user(username = "t23", password = "password", first_name = "Team 23")
-        User.objects.create_user(username = "s22", password = "password", is_staff = True, first_name = "Staff 22")
+        self.user = User.objects.create_user(username = "user", password = "password")
+        self.staff = User.objects.create_user(username = "staff", password = "password", is_staff = True)
+        self.t23 = User.objects.create_user(username = "t23", password = "password", first_name = "Team 23")
+        self.s22 = User.objects.create_user(username = "s22", password = "password", is_staff = True, first_name = "Staff 22")
 
     def assertContent (self, content, *args, **kwargs):
         response: JsonResponse = self.client.get("/whoami/", *args, **kwargs)
@@ -43,13 +43,13 @@ class TestWhoAmI (TransactionTestCase):
         self.assertContent({ "is_authenticated": False })
     @override_settings(ROOT_URLCONF="ccs.urls")
     def test_logged_in (self):
-        self.assertContentForUser({ "is_authenticated": True, "is_staff": False, "username": "user" }, "user")
+        self.assertContentForUser({ "id": str(self.user.pk), "is_authenticated": True, "is_staff": False, "username": "user" }, "user")
     @override_settings(ROOT_URLCONF="ccs.urls")
     def test_staff (self):
-        self.assertContentForUser({ "is_authenticated": True, "is_staff": True, "username": "staff" }, "staff")
+        self.assertContentForUser({ "id": str(self.staff.pk), "is_authenticated": True, "is_staff": True, "username": "staff" }, "staff")
     @override_settings(ROOT_URLCONF="ccs.urls")
     def test_first_name (self):
-        self.assertContentForUser({ "is_authenticated": True, "is_staff": False, "username": "t23", "display_name": "Team 23" }, "t23")
+        self.assertContentForUser({ "id": str(self.t23.pk), "is_authenticated": True, "is_staff": False, "username": "t23", "display_name": "Team 23" }, "t23")
     @override_settings(ROOT_URLCONF="ccs.urls")
     def test_first_name_and_staff (self):
-        self.assertContentForUser({ "is_authenticated": True, "is_staff": True, "username": "s22", "display_name": "Staff 22" }, "s22")
+        self.assertContentForUser({ "id": str(self.s22.pk), "is_authenticated": True, "is_staff": True, "username": "s22", "display_name": "Staff 22" }, "s22")
