@@ -56,11 +56,13 @@ def ccs_json_from_print (print: "ContestPrint") -> PrintCCSJson:
     if print.pdf_location is not None:
         ccs["pdf_href"] = reverse(
             REV_PRINT_DOWNLOAD,
-            kwargs = { "pk": print.contest.pk, "prpk": print.pk, "kind": "pdf" })
+            kwargs = { "pk": print.contest.pk, "prpk": print.pk, "kind": "pdf" },
+            urlconf = "ccs.urls")
     if print.err_location is not None:
         ccs["err_href"] = reverse(
             REV_PRINT_DOWNLOAD,
-            kwargs = { "pk": print.contest.pk, "prpk": print.pk, "kind": "err" })
+            kwargs = { "pk": print.contest.pk, "prpk": print.pk, "kind": "err" },
+            urlconf = "ccs.urls")
     if print.simple_error is not None:
         ccs["simple_error"] = print.simple_error
 
