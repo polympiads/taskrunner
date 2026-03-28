@@ -49,7 +49,8 @@ def ccs_json_from_print (print: "ContestPrint") -> PrintCCSJson:
 
         "code_href" : reverse(
             REV_PRINT_DOWNLOAD,
-            kwargs = { "pk": print.contest.pk, "prpk": print.pk, "kind": "code" })
+            kwargs = { "pk": print.contest.pk, "prpk": print.pk, "kind": "code" },
+            urlconf = "ccs.urls")
     }
 
     if print.pdf_location is not None:

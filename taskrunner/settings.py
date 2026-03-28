@@ -47,7 +47,9 @@ INSTALLED_APPS = [
     'problems',
     'storage',
     'rules',
-    'ccs'
+    'ccs',
+    "printing",
+    "balloons"
 ]
 
 MIDDLEWARE = [
