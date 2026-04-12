@@ -13,6 +13,7 @@ RUN apt-get install -y libsystemd-dev
 RUN git clone https://github.com/ioi/isolate.git isolate-github
 
 WORKDIR /tools/isolate/isolate-github
+RUN git reset --hard a918ac007fdfbfddc9a045d500cf72e3cd330e5b
 RUN make
 RUN make install
 
